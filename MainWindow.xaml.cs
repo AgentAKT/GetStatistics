@@ -1,0 +1,743 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using Renci.SshNet;
+using AxMSTSCLib;
+using System.Windows.Documents;
+using System.Text.RegularExpressions;
+using System.Windows.Input;
+using System.Diagnostics;
+using System.Collections.ObjectModel;
+using System.Windows.Controls.Primitives;
+using GetStatistics.Models;
+
+
+namespace GetStatistics
+{
+    public partial class MainWindow : Window
+    {
+
+        private readonly PathCombine _pathCombine;
+        private Config _config;
+        private List<string> _logFiles = new List<string>();
+        private bool _filterByToday = false;
+        private NetworkConnection _networkConnection;
+        private string _searchText = "";
+        private string _searchLogText = "";
+        private string _searchLogTextRight = "";
+        private FilterFiles _filterFiles;
+        private LogFileService _logFileService;
+        private readonly QuoteManager _quoteManager;
+        private ConfigLoader _configLoader;
+
+        public SshClient _sshClient;
+        private bool _isReadingLogs = false;
+        private string _currentLogFilePath = "";
+
+        
+        public MainWindow()
+        {
+            InitializeComponent();
+            _configLoader = new ConfigLoader(
+                StringComboBox_One_Left,
+                StringComboBox_Two_Left,
+                StringComboBox_One_Right,
+                StringComboBox_Two_Right);
+            LoadConfig();
+            _networkConnection = new NetworkConnection();
+            _filterFiles = new FilterFiles(this);
+            _logFileService = new LogFileService(
+                LogRichTextBox,
+                StatusText,
+                () => new FilterParameters
+                {
+                    Filter_One = StringComboBox_One_Left.SelectedItem?.ToString(),
+                    Filter_Two = StringComboBox_Two_Left.SelectedItem?.ToString(),
+                    SearchText_One = SearchTextBoxLog_One_Left.Text,
+                    SearchText_Two = SearchTextBoxLog_Two_Left.Text
+                },
+                () => new FilterParameters
+                {
+                    Filter_One = StringComboBox_One_Right.SelectedItem?.ToString(),
+                    Filter_Two = StringComboBox_Two_Right.SelectedItem?.ToString(),
+                    SearchText_One = SearchTextBoxLog_One_Right.Text,
+                    SearchText_Two = SearchTextBoxLog_Two_Right.Text
+                },
+                this  // ← теперь правильно
+            );
+
+            _pathCombine = new PathCombine();
+
+            _quoteManager = new QuoteManager("quotes.txt");
+            Loaded += OnMainWindowLoaded;
+
+            StatusText.Text = $"  Team78 (UAT)";
+        }
+
+        public async void LoadConfig()
+        {
+            await _configLoader.LoadConfigAsync("config.json");
+        }
+
+        public ObservableCollection<LogResult> LogResults { get; } = new ObservableCollection<LogResult>();
+
+        private async Task GetLocalFiles(string path)
+        {
+            try
+            {
+                var patterns = new[] { "*.log", "*.usrlog", "*.txt" };
+                _logFiles = patterns.SelectMany(p => Directory.GetFiles(path, p))
+                                    .Distinct()
+                                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.Forms.MessageBox.Show($"Ошибка: {ex.Message}");
+            }
+        }
+
+        private async Task<List<string>> GetLogFilesFromServerAsync(ServerConfig server)
+        {
+            var logFiles = new List<string>();
+
+            if (_sshClient != null && _sshClient.IsConnected)
+            {
+                var command = _sshClient.CreateCommand($"ls {server.Path} | grep -E '\\log$|\\.txt$'");
+                var result = await Task.Run(() => command.Execute());
+
+                if (command.ExitStatus == 0)
+                {
+                    logFiles = result.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(file => Path.Combine(server.Path, file))
+                                    .ToList();
+                }
+                else
+                {
+                    MessageBox.Show($"Ошибка получения списка файлов: {command.Error}");
+                }
+            }
+
+            return logFiles;
+        }
+
+        // Фильтр файлов по условию
+        public async void ApplyFilters()  // или async Task, если вызывается из другого async метода
+        {
+            var filteredFiles = _logFiles;
+
+            // Логи за сегодня
+            if (_filterByToday)
+            {
+                filteredFiles = await _filterFiles.FilterByToday(filteredFiles);
+            }
+
+            // Фильтр логов по названию
+            if (!string.IsNullOrEmpty(_searchText))
+            {
+                filteredFiles = await _filterFiles.FilterFilesByName(filteredFiles, _searchText);
+            }
+
+            var fileNames = filteredFiles.Select(Path.GetFileName).ToList();
+            LogList.ItemsSource = fileNames;
+            Debug.WriteLine($"Отображаем файлы: {fileNames.Count}");
+        }
+
+        private void StopReadingLogs()
+        {
+            try
+            {
+                // 1. Остановка фонового чтения логов
+                _isReadingLogs = false;
+
+                //// 2. Закрытие SSH-соединения
+                //if (_sshClient != null && _sshClient.IsConnected)
+                //{
+                //    _sshClient.Disconnect();
+                //    _sshClient.Dispose();
+                //    _sshClient = null;
+                //}
+
+                //// 3. Очистка текущих данных
+                //_logFiles.Clear();
+                //_currentLogFilePath = string.Empty;
+
+                //// 4. Обновление UI
+                //Dispatcher.Invoke(() =>
+                //{
+                //    LogListBox.ItemsSource = null;
+                //    LogRichTextBox.Document.Blocks.Clear();
+                //});
+
+                //Debug.WriteLine("Чтение логов остановлено");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка при остановке чтения логов: {ex.Message}");
+                Dispatcher.Invoke(() =>
+                    MessageBox.Show($"Ошибка при остановке: {ex.Message}"));
+            }
+        }
+
+        private async void LogList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Проверяем выбор в обоих контролах
+            bool isFileSelected = LogList.SelectedItem is string selectedFile;
+            //bool isServerSelected = ServerComboBox.SelectedItem is ServerConfig server;
+
+            if (!isFileSelected)
+            {
+                // Если файл не выбран - выходим
+                return;
+            }
+
+            selectedFile = (string)LogList.SelectedItem;
+ 
+            // Если сервер не выбран, используем локальный путь из OpenFolder
+            _currentLogFilePath = Path.Combine(_currentLogFilePath ?? "", selectedFile);
+            await _logFileService.LoadLogFile(_currentLogFilePath, new ServerConfig { Protocol = "Local" });
+            return;
+
+        }
+
+        private bool CheckComboBoxes()
+        {
+            if (!string.IsNullOrEmpty(StringComboBox_One_Left.Text) &&
+                    string.IsNullOrEmpty(StringComboBox_Two_Left.Text) &&
+                    string.IsNullOrEmpty(SearchTextBoxLog_One_Left.Text) &&
+                    string.IsNullOrEmpty(SearchTextBoxLog_Two_Left.Text) &&
+                    string.IsNullOrEmpty(StringComboBox_One_Right.Text) &&
+                    string.IsNullOrEmpty(StringComboBox_Two_Right.Text) &&
+                    string.IsNullOrEmpty(SearchTextBoxLog_One_Right.Text) &&
+                    string.IsNullOrEmpty(SearchTextBoxLog_Two_Right.Text))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        private async Task LoadLocalFile(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath))
+            {
+                MessageBox.Show("Путь к файлу не указан.");
+                return;
+            }
+
+            if (!File.Exists(filePath))
+            {
+                MessageBox.Show($"Файл не существует: {filePath}");
+                return;
+            }
+
+            try
+            {
+                // Пытаемся открыть файл с задержкой и повторными попытками
+                int maxRetries = 3;
+                for (int i = 0; i < maxRetries; i++)
+                {
+                    try
+                    {
+                        using (var fileStream = new FileStream(
+                            filePath,
+                            FileMode.Open,
+                            FileAccess.Read,
+                            FileShare.ReadWrite)) // Разрешаем чтение, даже если файл заблокирован
+                        using (var streamReader = new StreamReader(fileStream))
+                        {
+                            string content = await streamReader.ReadToEndAsync();
+                            LogRichTextBox.Document.Blocks.Clear();
+                            _logFileService.ApplyLogFilters(content, LogRichTextBox, true);
+                            return; // Успешно
+                        }
+                    }
+                    catch (IOException ex) when (i < maxRetries - 1)
+                    {
+                        await Task.Delay(100); // Ждём 100 мс перед повторной попыткой
+                    }
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                MessageBox.Show($"Нет доступа к файлу: {ex.Message}\nПопробуйте запустить программу от имени администратора.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка чтения файла: {ex.Message}");
+            }
+        }
+
+
+        private void TodayCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            _filterByToday = true;
+            ApplyFilters();
+        }
+
+        private void TodayCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _filterByToday = false;
+            ApplyFilters();
+        }
+
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _searchText = SearchTextBox.Text;
+            ApplyFilters();
+        }
+
+        private void SearchTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                // Вызываем тот же метод, что и при изменении текста
+                //_searchText = SearchTextBox.Text;
+                ApplyFilters();
+            }
+        }
+        private async void SearchTextBoxLog_One_Left_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+
+                //if (!string.IsNullOrEmpty(_currentLogFilePath) && ServerComboBox.SelectedItem is ServerConfig server)
+                //{
+                //    await _logFileService.LoadLogFile(_currentLogFilePath, server);
+                //    StatusText.Text = "Сортировка по левому фильтру...";
+                //}
+                //else
+                //{
+                    await LoadLocalFile(_currentLogFilePath);
+                    StatusText.Text = "Сортировка по левому фильтру...";
+                    StartSearchInFilesButton_Left_Click(sender, e);
+                //}
+            }
+        }
+
+        private async void SearchTextBoxLogRight_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+
+                //if (!string.IsNullOrEmpty(_currentLogFilePath) && ServerComboBox.SelectedItem is ServerConfig server)
+                //{
+                //    await _logFileService.LoadLogFile(_currentLogFilePath, server);
+                //    StatusText.Text = "Сортировка по правому фильтру...";
+
+                //}
+            }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _sshClient?.Disconnect();
+            _sshClient?.Dispose();
+            base.OnClosed(e);
+        }
+
+
+        private void Time1TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
+
+        private void Time2TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
+
+        private void RadioButtonSSH_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void RadioButtonRDP_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private async void StringTwoComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            
+        }
+
+        private async void StringOneComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+           
+        }
+
+        private async void StringOneComboBox_Right_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            
+        }
+
+        private async void StringTwoComboBox_Right_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            
+        }
+
+        private void SearchInFile_LeftButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Метод с левыми фильтрами
+        }
+
+
+        private void ClearButton_Right_Click(object sender, RoutedEventArgs e)
+        {
+            StringComboBox_One_Right.Text = "";
+            StringComboBox_Two_Right.Text = "";
+            SearchTextBoxLog_One_Right.Text = "";
+            SearchTextBoxLog_Two_Right.Text = "";
+            StatusText.Text = "Фильтр справа очищен";
+        }
+        private void LogRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
+
+        private void LogRichTextBox_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+        }
+
+        private string ExtractTimestamp(string input)
+        {
+            // Регулярное выражение для поиска timestamp с миллисекундами
+            // Пример формата: 2023-04-15 14:30:45.123
+            Regex regex = new Regex(@"\d{2}:\d{2}:\d{2}\.\d{3}");
+
+            Match match = regex.Match(input);
+
+            return match.Success ? match.Value : null;
+        }
+        bool boolTimeStamp = false;
+        private ObservableCollection<LogResult> _logResults = new ObservableCollection<LogResult>();
+        string lineText1 = "";
+        string lineText2 = "";
+
+        private string GetSelectedLineText()
+        {
+            var textPointer = LogRichTextBox.GetPositionFromPoint(
+                Mouse.GetPosition(LogRichTextBox), true);
+            if (textPointer == null) return null;
+
+            var lineStart = GetLineStart(textPointer);
+            var lineEnd = GetLineEnd(textPointer);
+
+            return lineStart != null && lineEnd != null
+                ? new TextRange(lineStart, lineEnd).Text.Trim()
+                : null;
+        }
+
+        
+
+        // Получает начало строки для данного TextPointer
+        private TextPointer GetLineStart(TextPointer pointer)
+        {
+            var lineStart = pointer;
+            while (lineStart != null && lineStart.GetPointerContext(LogicalDirection.Backward) != TextPointerContext.ElementStart)
+            {
+                lineStart = lineStart.GetNextContextPosition(LogicalDirection.Backward);
+            }
+            return lineStart;
+        }
+
+        // Получает конец строки для данного TextPointer
+        private TextPointer GetLineEnd(TextPointer pointer)
+        {
+            var lineEnd = pointer;
+            while (lineEnd != null && lineEnd.GetPointerContext(LogicalDirection.Forward) != TextPointerContext.ElementEnd)
+            {
+                lineEnd = lineEnd.GetNextContextPosition(LogicalDirection.Forward);
+            }
+            return lineEnd;
+        }
+
+
+        private void LogRichTextBox_MouseMove(object sender, MouseEventArgs e)
+        {
+
+            //var clickPosition = e.GetPosition(LogRichTextBox);
+            //var textPointer = LogRichTextBox.GetPositionFromPoint(clickPosition, true);
+
+            //if (textPointer == null)
+            //    return;
+
+            //// Получаем начало строки
+            //var lineStart = GetLineStart(textPointer);
+            //var lineEnd = GetLineEnd(textPointer);
+
+            //if (lineStart == null || lineEnd == null)
+            //    return;
+            //LogRichTextBox.Selection.Select(lineStart, lineEnd);
+
+        }
+
+        private void CopyAllTableButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_logResults == null || _logResults.Count == 0)
+                {
+                    MessageBox.Show("Нет данных для копирования");
+                    return;
+                }
+
+                // Создаем строку с заголовками колонок
+                var headers = string.Join("\t", ResultsDataGrid.Columns
+                    .Where(c => c.Header != null && c.Header.ToString() != "⎘")
+                    .Select(c => c.Header.ToString()));
+
+                // Собираем все данные
+                var dataLines = _logResults.Select(row =>
+                    $"{row.LineText1}\n{row.LineText2}\n{row.Result}\n");
+
+                // Объединяем в один текст
+                var allText = string.Join(Environment.NewLine, dataLines);
+
+                // Копируем в буфер обмена
+                Clipboard.SetText(allText);
+
+                // Показываем уведомление
+                ShowCopyNotification("Все данные скопированы!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при копировании: {ex.Message}");
+            }
+        }
+
+        // Обновленный метод для уведомлений
+        private void ShowCopyNotification(string message = "Данные скопированы!")
+        {
+            var notification = new ToolTip
+            {
+                Content = message,
+                StaysOpen = false,
+                IsOpen = true,
+                Placement = PlacementMode.Mouse
+            };
+
+            Task.Delay(1000).ContinueWith(_ =>
+                Dispatcher.Invoke(() => notification.IsOpen = false));
+        }
+
+        // Копирование по кнопке
+        private void CopyRowButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is LogResult row)
+            {
+                Clipboard.SetText(row.GetCopyText());
+                ShowCopyNotification();
+            }
+        }
+
+        // Копирование по двойному клику на строку
+        private void ResultsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (ResultsDataGrid.SelectedItem is LogResult row)
+            {
+                Clipboard.SetText(row.GetCopyText());
+                ShowCopyNotification();
+            }
+        }
+
+        // Всплывающее уведомление
+        private void ShowCopyNotification()
+        {
+            var notification = new ToolTip
+            {
+                Content = "Данные скопированы!",
+                StaysOpen = false,
+                IsOpen = true,
+                Placement = PlacementMode.Mouse
+            };
+
+            // Автоматическое закрытие через 1 секунду
+            Task.Delay(1000).ContinueWith(_ =>
+                Dispatcher.Invoke(() => notification.IsOpen = false));
+        }
+
+        public class LogResult
+        {
+            public string LineText1 { get; set; }  // Лог строка 1
+            public string LineText2 { get; set; } // Лог строка 2
+            public string Result { get; set; } // Числовой результат
+            public string GetCopyText() => $"{LineText1}\n{LineText2}\n{Result}";
+        }
+
+        private void OpenServersWindowBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ServersWindow serversWindow = new ServersWindow(this);
+
+            // Показываем окно
+            serversWindow.Show();
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void MenuItem_Click_1(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void SearchTextBoxLog_Two_Left_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
+
+        private void StartSearchInFilesButton_Click(object sender, RoutedEventArgs e)
+        {
+        }
+
+        private string OpenFolderDialog()
+        {
+            var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "Выберите папку с логами",
+                ShowNewFolderButton = false
+            };
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                return dialog.SelectedPath;
+            }
+
+            return null; // или string.Empty, если выбор отменен
+        }
+
+        private async void OpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            _currentLogFilePath = OpenFolderDialog();
+            //comboBoxFolders.ItemsSource = null;
+            //ServerComboBox.ItemsSource = null;
+
+            if (!string.IsNullOrEmpty(_currentLogFilePath))
+            {
+                Console.WriteLine(_currentLogFilePath);
+                await GetLocalFiles(_currentLogFilePath);
+                ApplyFilters();
+            }
+            else
+            {
+                MessageBox.Show("Выбор папки отменён.");
+            }
+        }
+
+        public void UpdateStatusText(string text)
+        {
+            Dispatcher.Invoke(() => StatusText.Text = text);
+        }
+
+        private void SearchTextBoxLog_One_Left_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
+
+
+        
+
+        private void SearchTextBoxLog_Two_Left_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                StartSearchInFilesButton_Left_Click(sender, e);
+            }
+        }
+
+        private void StartSearchInFilesButton_Left_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(_currentLogFilePath))
+            {
+                var content = File.ReadAllText(_currentLogFilePath);
+                _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: true);
+            }
+        }
+
+        private void StartSearchInFilesButton_Right_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(_currentLogFilePath))
+            {
+                var content = File.ReadAllText(_currentLogFilePath);
+                _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: false);
+            }
+        }
+
+        // Очистить левые фильтры
+        private void ClearButton_Left_Click(object sender, RoutedEventArgs e)
+        {
+            StringComboBox_One_Left.Text = "";
+            StringComboBox_Two_Left.Text = "";
+            SearchTextBoxLog_One_Left.Text = "";
+            SearchTextBoxLog_Two_Left.Text = "";
+            StatusText.Text = "Фильтр слева очищен";
+        }
+
+        // Первая строка поиска справа
+        private void SearchTextBoxLog_One_Right_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Реализация фильтрации
+        }
+
+        // Вторая строка поиска справа
+        private void SearchTextBoxLog_Two_Right_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Реализация фильтрации
+        }
+
+        private void SearchTextBoxLog_One_Right_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) StartSearchInFilesButton_Right_Click(sender, e);
+        }
+
+        private void SearchTextBoxLog_Two_Right_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) StartSearchInFilesButton_Right_Click(sender, e);
+        }
+
+        
+
+        private void DisplayQuoteInRichTextBox(RichTextBox richTextBox, string quote, string author)
+        {
+            // Очищаем содержимое
+            richTextBox.Document.Blocks.Clear();
+
+            // Создаем параграф для цитаты
+            var quoteParagraph = new Paragraph
+            {
+                Margin = new Thickness(0, 10, 0, 20),
+                FontStyle = FontStyles.Italic,
+                FontSize = 14,
+                TextAlignment = TextAlignment.Justify
+            };
+            quoteParagraph.Inlines.Add(new Run($"\"{quote}\""));
+
+            // Создаем параграф для автора
+            var authorParagraph = new Paragraph
+            {
+                Margin = new Thickness(0, 0, 0, 10),
+                FontWeight = FontWeights.Bold,
+                FontSize = 12,
+                TextAlignment = TextAlignment.Right
+            };
+            authorParagraph.Inlines.Add(new Run($"— {author}"));
+
+            // Добавляем параграфы в RichTextBox
+            richTextBox.Document.Blocks.Add(quoteParagraph);
+            richTextBox.Document.Blocks.Add(authorParagraph);
+        }
+
+        private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
+        {
+            var (quote, author) = _quoteManager.GetRandomQuote();
+            DisplayQuoteInRichTextBox(LogRichTextBox, quote, author);
+        }
+    }
+}
