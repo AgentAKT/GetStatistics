@@ -592,9 +592,9 @@ FontSize="14">
                           HeadersVisibility="Column"
                           ItemsSource="{Binding LogResults}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Строка 1" Binding="{Binding LineText1}" Width="*"/>
-                            <DataGridTextColumn Header="Строка 2" Binding="{Binding LineText2}" Width="*"/>
-                            <DataGridTextColumn Header="Результат" Binding="{Binding Result}" Width="*"/>
+                            <DataGridTextColumn Header="Фильтры" Binding="{Binding Filters}" Width="*"/>
+                            <DataGridTextColumn Header="Счетчик запроса" Binding="{Binding Counter}" Width="*"/>
+                            <DataGridTextColumn Header="Счетчик общий3" Binding="{Binding FullCounter}" Width="*"/>
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.Header>
                                     <Button Content="⎘" 

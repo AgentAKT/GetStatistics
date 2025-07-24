@@ -34,6 +34,7 @@ internal class FilterLogFile
 
         var filteredContent = FilterContent(filters, isLeftFilter);
         UpdateRichTextBox(filteredContent, filters, isLeftFilter);
+        AddToResultsDataGrid(filters, _counter, 100);
     }
 
     private string FilterContent(FilterParameters filters, bool isLeftFilter)
@@ -193,5 +194,59 @@ internal class FilterLogFile
             activeFilters.Add(filters.SearchText_Two);
 
         return activeFilters;
+    }
+
+    public class FilterResultItem
+    {
+        public string Filters { get; set; }
+        public int Counter { get; set; }
+        public int FullCounter { get; set; }
+    }
+
+    public void AddToResultsDataGrid(FilterParameters filters, int counter, int fullCounter)
+    {
+        if (_mainWindow.ResultsDataGrid == null || !_mainWindow.ResultsDataGrid.CheckAccess())
+            return;
+
+        _mainWindow.ResultsDataGrid.Dispatcher.Invoke(() =>
+        {
+            // Создаем строку для DataGrid
+            var newItem = new FilterResultItem
+            {
+                Filters = FormatFilters(filters),
+                Counter = counter,
+                FullCounter = fullCounter
+            };
+
+            // Добавляем новую строку в DataGrid
+            if (_mainWindow.ResultsDataGrid.ItemsSource == null)
+            {
+                _mainWindow.ResultsDataGrid.ItemsSource = new List<FilterResultItem> { newItem };
+            }
+            else if (_mainWindow.ResultsDataGrid.ItemsSource is IList<FilterResultItem> itemsList)
+            {
+                itemsList.Add(newItem);
+                _mainWindow.ResultsDataGrid.Items.Refresh();
+            }
+        });
+    }
+
+    private string FormatFilters(FilterParameters filters)
+    {
+        var sb = new StringBuilder();
+
+        if (!string.IsNullOrEmpty(filters.Filter_One))
+            sb.Append($"1: {filters.Filter_One} ");
+
+        if (!string.IsNullOrEmpty(filters.Filter_Two))
+            sb.Append($"2: {filters.Filter_Two} ");
+
+        if (!string.IsNullOrEmpty(filters.SearchText_One))
+            sb.Append($"S1: {filters.SearchText_One} ");
+
+        if (!string.IsNullOrEmpty(filters.SearchText_Two))
+            sb.Append($"S2: {filters.SearchText_Two}");
+
+        return sb.ToString().Trim();
     }
 }
