@@ -36,6 +36,11 @@ public class QuoteManager
                 }
             }
         }
+
+
+
+
+
         catch (Exception ex) when (ex is FileNotFoundException || ex is DirectoryNotFoundException)
         {
             // Дефолтные цитаты, если файл не найден
