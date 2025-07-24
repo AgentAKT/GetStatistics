@@ -6,6 +6,8 @@ using System;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Collections.Generic;
+using System.Windows;
 
 internal class FilterLogFile
 {
@@ -85,17 +87,111 @@ internal class FilterLogFile
             var paragraph = new Paragraph();
             var lines = logContent.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
+            // Цвет для выделения совпадений
+            var highlightBrush = isLeftFilter ? Brushes.Yellow: Brushes.LightBlue;
+            var activeFilters = GetActiveFilters(filters);
+
             foreach (var line in lines)
             {
-                var run = new Run(line + "\n");
+                var text = line + "\n";
 
-                // Подсвечиваем в зависимости от типа фильтра
-                run.Background = isLeftFilter ? Brushes.Yellow : Brushes.LightBlue;
-                paragraph.Inlines.Add(run);
+                if (activeFilters.Count == 0)
+                {
+                    paragraph.Inlines.Add(new Run(text));
+                }
+                else
+                {
+                    var span = new Span();
+                    FindAndHighlightMatches(span, text, activeFilters, highlightBrush);
+                    paragraph.Inlines.Add(span);
+                }
             }
 
             _logRichTextBox.Document.Blocks.Clear();
             _logRichTextBox.Document.Blocks.Add(paragraph);
         });
+    }
+
+    private void FindAndHighlightMatches(Span container, string text, List<string> filters, Brush highlightBrush)
+    {
+        var matches = new List<TextMatch>();
+
+        // Находим все совпадения для всех фильтров
+        foreach (var filter in filters)
+        {
+            if (string.IsNullOrEmpty(filter)) continue;
+
+            int index = 0;
+            while ((index = text.IndexOf(filter, index, StringComparison.OrdinalIgnoreCase)) >= 0)
+            {
+                matches.Add(new TextMatch(index, filter.Length));
+                index += filter.Length;
+            }
+        }
+
+        // Если нет совпадений - просто добавляем текст
+        if (matches.Count == 0)
+        {
+            container.Inlines.Add(new Run(text));
+            return;
+        }
+
+        // Сортируем совпадения по позиции
+        matches.Sort((a, b) => a.Start.CompareTo(b.Start));
+
+        // Строим текст с выделениями
+        int currentPos = 0;
+        foreach (var match in matches)
+        {
+            // Текст до совпадения
+            if (match.Start > currentPos)
+            {
+                container.Inlines.Add(new Run(text.Substring(currentPos, match.Start - currentPos)));
+            }
+
+            // Выделенное совпадение
+            container.Inlines.Add(new Run(text.Substring(match.Start, match.Length))
+            {
+                Background = highlightBrush,
+                //FontWeight = FontWeights.Bold
+            });
+
+            currentPos = match.Start + match.Length;
+        }
+
+        // Остаток текста после последнего совпадения
+        if (currentPos < text.Length)
+        {
+            container.Inlines.Add(new Run(text.Substring(currentPos)));
+        }
+    }
+
+    // Вспомогательная структура для хранения информации о совпадении
+    private readonly struct TextMatch
+    {
+        public TextMatch(int start, int length)
+        {
+            Start = start;
+            Length = length;
+        }
+
+        public int Start { get; }
+        public int Length { get; }
+    }
+
+    private List<string> GetActiveFilters(FilterParameters filters)
+    {
+        var activeFilters = new List<string>();
+
+        if (!string.IsNullOrEmpty(filters.Filter_One))
+            activeFilters.Add(filters.Filter_One);
+        if (!string.IsNullOrEmpty(filters.Filter_Two))
+            activeFilters.Add(filters.Filter_Two);
+        if (!string.IsNullOrEmpty(filters.SearchText_One))
+            activeFilters.Add(filters.SearchText_One);
+        if (!string.IsNullOrEmpty(filters.SearchText_Two))
+            activeFilters.Add(filters.SearchText_Two);
+
+        return activeFilters;
     }
 }

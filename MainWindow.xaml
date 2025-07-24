@@ -512,7 +512,7 @@ FontSize="14">
                          Background="White"
                          BorderThickness="0"
                          FontFamily="Segoe UI"
-                         FontSize="16"
+                         FontSize="14"
                          TextChanged="LogRichTextBox_TextChanged"
                          MouseMove="LogRichTextBox_MouseMove">
                     <RichTextBox.Resources>
