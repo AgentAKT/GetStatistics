@@ -94,23 +94,76 @@ public class FilterLogFile
         {
             var paragraph = new Paragraph();
             var lines = logContent.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-
-            // Цвет для выделения совпадений
-            var highlightBrush = isLeftFilter ? Brushes.Yellow: Brushes.LightBlue;
+            var highlightBrush = isLeftFilter ? Brushes.Yellow : Brushes.LightBlue;
             var activeFilters = GetActiveFilters(filters);
 
-            foreach (var line in lines)
+            if (_mainWindow.Unical_Left_CheckBox.IsChecked == true)
             {
-                var text = line + "\n";
+                // Словарь для хранения уникальных совпадений
+                var uniqueMatches = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-                if (activeFilters.Count == 0)
+                foreach (var line in lines)
                 {
-                    paragraph.Inlines.Add(new Run(text));
+                    // Проверяем, содержит ли строка все активные фильтры (кроме SearchText_One и SearchText_Two)
+                    bool matchesAllFilters = true;
+                    foreach (var filter in activeFilters)
+                    {
+                        if (filter != filters.SearchText_One &&
+                            filter != filters.SearchText_Two &&
+                            !line.Contains(filter))
+                        {
+                            matchesAllFilters = false;
+                            break;
+                        }
+                    }
+
+                    if (!matchesAllFilters)
+                        continue;
+
+                    // Ищем текст между SearchText_One и SearchText_Two
+                    if (string.IsNullOrEmpty(filters.SearchText_One) || string.IsNullOrEmpty(filters.SearchText_Two))
+                        continue;
+
+                    int startIndex = line.IndexOf(filters.SearchText_One);
+                    if (startIndex == -1)
+                        continue;
+
+                    startIndex += filters.SearchText_One.Length;
+                    int endIndex = line.IndexOf(filters.SearchText_Two, startIndex);
+                    if (endIndex == -1)
+                        continue;
+
+                    string matchedText = line.Substring(startIndex, endIndex - startIndex).Trim();
+                    string fullLine = line + "\n";
+
+                    // Добавляем только если это уникальное совпадение
+                    if (!uniqueMatches.ContainsKey(matchedText))
+                    {
+                        uniqueMatches[matchedText] = fullLine;
+
+                        var span = new Span();
+                        FindAndHighlightMatches(span, fullLine, activeFilters, highlightBrush);
+                        paragraph.Inlines.Add(span);
+                    }
                 }
-                else
+            }
+            else
+            {
+                // Обычная обработка без учета уникальности
+                foreach (var line in lines)
                 {
+                    var text = line + "\n";
                     var span = new Span();
-                    FindAndHighlightMatches(span, text, activeFilters, highlightBrush);
+
+                    if (activeFilters.Count > 0)
+                    {
+                        FindAndHighlightMatches(span, text, activeFilters, highlightBrush);
+                    }
+                    else
+                    {
+                        span.Inlines.Add(new Run(text));
+                    }
+
                     paragraph.Inlines.Add(span);
                 }
             }
