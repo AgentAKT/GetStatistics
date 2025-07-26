@@ -97,7 +97,7 @@ public class FilterLogFile
             var highlightBrush = isLeftFilter ? Brushes.Yellow : Brushes.LightBlue;
             var activeFilters = GetActiveFilters(filters);
 
-            if (_mainWindow.Unical_Left_CheckBox.IsChecked == true)
+            if (_mainWindow.Unical_CheckBox.IsChecked == true)
             {
                 // Словарь для хранения уникальных совпадений
                 var uniqueMatches = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

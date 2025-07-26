@@ -13,15 +13,26 @@
         Icon="/Assets/log_navigator_logo.png">
 
     <Window.Resources>
-        <Style TargetType="Button" x:Key="ButtonStyle">
+        <!-- Цветовая палитра -->
+        <SolidColorBrush x:Key="PrimaryColor" Color="#FF2C3E50"/>
+        <SolidColorBrush x:Key="SecondaryColor" Color="#FF3498DB"/>
+        <SolidColorBrush x:Key="LightBackground" Color="#FFF8F9FA"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#FFE0E0E0"/>
+        <SolidColorBrush x:Key="HoverColor" Color="#FFE3F2FD"/>
+        <SolidColorBrush x:Key="PressedColor" Color="#FFBBDEFB"/>
+        <SolidColorBrush x:Key="TextColor" Color="#FF333333"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#FFE74C3C"/>
+
+        <!-- Стили -->
+        <Style TargetType="Button" x:Key="ModernButton">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Margin" Value="4"/>
             <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="Background" Value="#FFF0F0F0"/>
-            <Setter Property="BorderBrush" Value="#FFCCCCCC"/>
+            <Setter Property="Background" Value="{StaticResource LightBackground}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="#FF333333"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -44,12 +55,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FFE5E5E5"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#FFADADAD"/>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource HoverColor}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FFD5D5D5"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#FF7E7E7E"/>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource PressedColor}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Opacity" Value="0.6"/>
@@ -60,64 +71,97 @@
             </Setter>
         </Style>
 
-        <Style TargetType="TextBox" x:Key="TextBoxStyle">
+        <Style TargetType="TextBox" x:Key="ModernTextBox">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Padding" Value="3"/>
-        </Style>
-
-        <Style TargetType="ComboBox" x:Key="ComboBoxStyle">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Padding" Value="3"/>
-        </Style>
-
-        <Style TargetType="ListBox" x:Key="ListBoxStyle">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#FFCCCCCC"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
         </Style>
 
-        <Style TargetType="DataGrid" x:Key="DataGridStyle">
+        <Style TargetType="ComboBox" x:Key="ModernComboBox">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#FFCCCCCC"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
         </Style>
 
-        <Style TargetType="TextBlock" x:Key="TextBlockStyle">
+        <Style TargetType="ListBox" x:Key="ModernListBox">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
         </Style>
 
-        <Style TargetType="CheckBox" x:Key="CheckBoxStyle">
-            <Setter Property="Foreground" Value="#FF2C3E50"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Margin" Value="5"/>
+        <Style TargetType="DataGrid" x:Key="ModernDataGrid">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#F5F5F5"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="SelectionUnit" Value="FullRow"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="CanUserResizeRows" Value="False"/>
+            <Setter Property="ColumnHeaderHeight" Value="30"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+            <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="ModernTextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+        </Style>
+
+        <Style TargetType="CheckBox" x:Key="ModernCheckBox">
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
                         <StackPanel Orientation="Horizontal">
                             <Border x:Name="checkBoxBorder"
-                                    Width="18"
-                                    Height="18"
-                                    Margin="0,0,5,0"
+                                    Width="16"
+                                    Height="16"
+                                    Margin="0,0,6,0"
                                     Background="White"
                                     BorderThickness="1"
-                                    BorderBrush="#FFBDC3C7"
+                                    BorderBrush="{StaticResource BorderColor}"
                                     CornerRadius="2">
                                 <Path x:Name="checkMark"
-                                      Width="14"
-                                      Height="14"
+                                      Width="12"
+                                      Height="12"
                                       Stretch="Fill"
-                                      Fill="#FF3498DB"
+                                      Fill="{StaticResource SecondaryColor}"
                                       Data="M 1,7 L 5,11 L 13,3"
-                                      Stroke="#FF3498DB"
+                                      Stroke="{StaticResource SecondaryColor}"
                                       StrokeThickness="2"
                                       Visibility="Collapsed"/>
                             </Border>
@@ -126,11 +170,11 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="checkMark" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="#FF3498DB"/>
+                                <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
                                 <Setter TargetName="checkBoxBorder" Property="Background" Value="#FFF5F9FF"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="#FF3498DB"/>
+                                <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -138,40 +182,77 @@
             </Setter>
         </Style>
 
-        <Style TargetType="Label" x:Key="LabelStyle">
-            <Setter Property="Background" Value="#F5F5F5"/>
-            <Setter Property="BorderBrush" Value="#DDDDDD"/>
+        <Style TargetType="Label" x:Key="ModernLabel">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+            <Setter Property="Padding" Value="0,2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="Border" x:Key="SectionBorder">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="FontSize" Value="20"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#FF2C3E50"/>
-            <Setter Property="Padding" Value="5,2"/>
-            <Setter Property="HorizontalContentAlignment" Value="Right"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="4"/>
+        </Style>
+
+        <Style TargetType="Menu">
+            <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="4,2"/>
+        </Style>
+
+        <Style TargetType="MenuItem">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="8,4"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Label">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="3">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                              Margin="{TemplateBinding Padding}"/>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Border" Background="Transparent">
+                            <Grid>
+                                <ContentPresenter x:Name="Header" 
+                                                ContentSource="Header"
+                                                RecognizesAccessKey="True"
+                                                VerticalAlignment="Center"
+                                                Margin="{TemplateBinding Padding}"/>
+                            </Grid>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="true">
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource SecondaryColor}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#EAEAEA"/>
-                    <Setter Property="BorderBrush" Value="#CCCCCC"/>
-                </Trigger>
-            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="StatusBar">
+            <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="8,2"/>
+        </Style>
+
+        <Style TargetType="RichTextBox" x:Key="ModernRichTextBox">
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="IsReadOnly" Value="True"/>
         </Style>
     </Window.Resources>
 
-    <DockPanel>
-        <Menu DockPanel.Dock="Top" FontSize="12">
+    <DockPanel Background="{StaticResource LightBackground}">
+        <Menu DockPanel.Dock="Top">
             <MenuItem Header="_Файл" Click="MenuItem_Click">
                 <Separator/>
             </MenuItem>
@@ -197,7 +278,7 @@
             </Grid.RowDefinitions>
 
             <!-- Left Panel -->
-            <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Background="White" BorderBrush="#FFCCCCCC" BorderThickness="1" Padding="5">
+            <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Style="{StaticResource SectionBorder}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -210,26 +291,26 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Button x:Name="OpenFolder" Grid.Column="0" Content="📁" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ButtonStyle}"/>
-                        <Button x:Name="SSHConnectionButton" Grid.Column="1" Content="SSH" MinWidth="60" Click="StartSearchInFilesButton_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ButtonStyle}"/>
+                        <Button x:Name="OpenFolder" Grid.Column="0" Content="📁 Открыть папку" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="SSHConnectionButton" Grid.Column="1" Content="SSH подключение" MinWidth="60" Click="StartSearchInFilesButton_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}"/>
                     </Grid>
-                    <CheckBox x:Name="TodayCheckBox" Grid.Row="1" Content="За текущую дату" Checked="TodayCheckBox_Checked" Unchecked="TodayCheckBox_Unchecked" Style="{StaticResource CheckBoxStyle}"/>
-                    <Grid Grid.Row="2" Margin="5">
+                    <CheckBox x:Name="TodayCheckBox" Grid.Row="1" Content="За текущую дату" Checked="TodayCheckBox_Checked" Unchecked="TodayCheckBox_Unchecked" Style="{StaticResource ModernCheckBox}"/>
+                    <Grid Grid.Row="2" Margin="0,4,0,4">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <TextBox x:Name="SearchTextBox" Grid.Row="0" Margin="0,5,5,0" TextChanged="SearchTextBox_TextChanged" Style="{StaticResource TextBoxStyle}"/>
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,2,5,5">
-                            <Button x:Name="StartSearchInFilesButton" Content="Найти" MinWidth="60" Click="StartSearchInFilesButton_Click" ToolTip="Поиск по содержимому всех файлов в папке" Style="{StaticResource ButtonStyle}"/>
+                        <TextBox x:Name="SearchTextBox" Grid.Row="0" Style="{StaticResource ModernTextBox}" TextChanged="SearchTextBox_TextChanged" ToolTip="Введите текст для поиска"/>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                            <Button x:Name="StartSearchInFilesButton" Content="Найти" MinWidth="60" Click="StartSearchInFilesButton_Click" ToolTip="Поиск по содержимому всех файлов в папке" Style="{StaticResource ModernButton}"/>
                         </StackPanel>
                     </Grid>
-                    <ListBox x:Name="LogList" Grid.Row="3" Margin="5" SelectionChanged="LogList_SelectionChanged" Style="{StaticResource ListBoxStyle}"/>
+                    <ListBox x:Name="LogList" Grid.Row="3" Style="{StaticResource ModernListBox}" SelectionChanged="LogList_SelectionChanged"/>
                 </Grid>
             </Border>
 
-            <!-- Log Controls Left -->
-            <Border Grid.Row="0" Grid.Column="2" Background="LightYellow" BorderBrush="#FFCCCCCC" BorderThickness="1" Padding="5">
+            <!-- Left Filter Panel -->
+            <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource SectionBorder}" Background="#FFF9F9F9">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -237,49 +318,38 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <ComboBox x:Name="StringComboBox_One_Left" Grid.Row="0" Margin="5" SelectionChanged="StringOneComboBox_SelectionChanged" Style="{StaticResource ComboBoxStyle}"/>
-                    <ComboBox x:Name="StringComboBox_Two_Left" Grid.Row="1" Margin="5" SelectionChanged="StringTwoComboBox_SelectionChanged" Style="{StaticResource ComboBoxStyle}"/>
-                    <Grid Grid.Row="2" Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="SearchTextBoxLog_One_Left" Grid.Column="0" Margin="0,0,5,0" Height="25" KeyDown="SearchTextBoxLog_One_Left_KeyDown" TextChanged="SearchTextBoxLog_One_Left_TextChanged" Style="{StaticResource TextBoxStyle}"/>
-                    </Grid>
-                    <Grid Grid.Row="3" Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="SearchTextBoxLog_Two_Left" Grid.Column="0" Margin="0,0,5,0" Height="25" KeyDown="SearchTextBoxLog_Two_Left_KeyDown" TextChanged="SearchTextBoxLog_Two_Left_TextChanged" Style="{StaticResource TextBoxStyle}"/>
-                    </Grid>
+                    <Label Content="Левый фильтр" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
+                    <ComboBox x:Name="StringComboBox_One_Left" Grid.Row="1" Style="{StaticResource ModernComboBox}" SelectionChanged="StringOneComboBox_SelectionChanged" ToolTip="Выберите первый критерий фильтрации"/>
+                    <ComboBox x:Name="StringComboBox_Two_Left" Grid.Row="2" Style="{StaticResource ModernComboBox}" SelectionChanged="StringTwoComboBox_SelectionChanged" ToolTip="Выберите второй критерий фильтрации"/>
+                    <TextBox x:Name="SearchTextBoxLog_One_Left" Grid.Row="3" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_One_Left_KeyDown" TextChanged="SearchTextBoxLog_One_Left_TextChanged" ToolTip="Введите текст для поиска"/>
+                    <TextBox x:Name="SearchTextBoxLog_Two_Left" Grid.Row="4" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_Two_Left_KeyDown" TextChanged="SearchTextBoxLog_Two_Left_TextChanged" ToolTip="Введите текст для поиска" Margin="0,4,0,0"/>
 
-                    <Grid Grid.Row="4" Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <CheckBox x:Name="Unical_Left_CheckBox" Grid.Column="0" Content="Посчитать уникальные" Style="{StaticResource CheckBoxStyle}"/>
-                        <Button x:Name="StatisticIn24h_LeftButton" MinWidth="80" Grid.Column="1" Content="Статистика" Width="70" Click="ShowHourlyStatistics_Click" ToolTip="Поиск левому фильтру" Style="{StaticResource ButtonStyle}"/>
-                    </Grid>
-
-                    <Grid Grid.Row="5" Margin="0,5,0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="90"/>
-                            <ColumnDefinition Width="90"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button x:Name="SearchInFile_LeftButton" Content="Найти" Grid.Column="0" Width="70" Click="StartSearchInFilesButton_Left_Click" ToolTip="Поиск левому фильтру" Style="{StaticResource ButtonStyle}"/>
-                        <Button x:Name="ClearButton_Left" Grid.Column="1" Content="Очистить" Click="ClearButton_Left_Click" Width="70" Margin="5,5,5,5" Style="{StaticResource ButtonStyle}"/>
-                        <Label x:Name="StringCounter_Left" Grid.Column="2" Content="0" Style="{StaticResource LabelStyle}"/>
-                    </Grid>
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                        <Button x:Name="SearchInFile_LeftButton" Content="Найти" Width="80" Click="StartSearchInFilesButton_Left_Click" ToolTip="Поиск по левому фильтру" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="ClearButton_Left" Content="Очистить" Width="80" Click="ClearButton_Left_Click" ToolTip="Очистить левый фильтр" Style="{StaticResource ModernButton}"/>
+                    </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Log Controls Right -->
-            <Border Grid.Row="0" Grid.Column="3" Background="LightBlue" BorderBrush="#FFCCCCCC" BorderThickness="1" Padding="5">
+            <!-- Statistics Panel -->
+            <Border Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Style="{StaticResource SectionBorder}" Background="#FFF0F7FF">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <CheckBox x:Name="Unical_CheckBox" Content="Уникальные" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center"/>
+                    <Button x:Name="StatisticIn24h_LeftButton" Grid.Column="1" Content="Статистика за 24 часа" MinWidth="120" HorizontalAlignment="Left" Click="ShowHourlyStatistics_Click" ToolTip="Показать статистику за 24 часа" Style="{StaticResource ModernButton}"/>
+                    <Label x:Name="StringCounter_Left" Grid.Column="2" Content="Найдено: 0" Style="{StaticResource ModernLabel}" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" HorizontalAlignment="Right"/>
+                    <Label x:Name="StringCounter_Main" Grid.Column="3" Content="Всего: 0" Style="{StaticResource ModernLabel}" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" HorizontalAlignment="Right"/>
+                </Grid>
+            </Border>
+
+            <!-- Right Filter Panel -->
+            <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource SectionBorder}" Background="#FFF9F9F9">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -287,89 +357,71 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <ComboBox x:Name="StringComboBox_One_Right" Grid.Row="0" Margin="5" SelectionChanged="StringOneComboBox_SelectionChanged" Style="{StaticResource ComboBoxStyle}"/>
-                    <ComboBox x:Name="StringComboBox_Two_Right" Grid.Row="1" Margin="5" SelectionChanged="StringTwoComboBox_SelectionChanged" Style="{StaticResource ComboBoxStyle}"/>
-                    <Grid Grid.Row="2" Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="SearchTextBoxLog_One_Right" Grid.Column="0" Margin="0,0,5,0" Height="25" KeyDown="SearchTextBoxLog_One_Right_KeyDown" TextChanged="SearchTextBoxLog_One_Right_TextChanged" Style="{StaticResource TextBoxStyle}"/>
-                    </Grid>
-                    <Grid Grid.Row="3" Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="SearchTextBoxLog_Two_Right" Grid.Column="0" Margin="0,0,5,0" Height="25" KeyDown="SearchTextBoxLog_Two_Right_KeyDown" TextChanged="SearchTextBoxLog_Two_Right_TextChanged" Style="{StaticResource TextBoxStyle}"/>
-                    </Grid>
-                    <CheckBox x:Name="Unical_Right_CheckBox" Grid.Row="4" Content="Посчитать уникальные" Style="{StaticResource CheckBoxStyle}"/>
-                    <Grid Grid.Row="5" Margin="0,5,0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="90"/>
-                            <ColumnDefinition Width="90"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button x:Name="SearchInFile_RightButton" Content="Найти" Grid.Column="0" Width="70" Click="StartSearchInFilesButton_Right_Click" ToolTip="Поиск правому фильтру" Style="{StaticResource ButtonStyle}"/>
-                        <Button x:Name="ClearButton_Right" Grid.Column="1" Content="Очистить" Click="ClearButton_Right_Click" Width="80" Margin="5,5,5,5" Style="{StaticResource ButtonStyle}"/>
-                        <Label x:Name="StringCounter_Right" Grid.Column="2" Content="0" Style="{StaticResource LabelStyle}"/>
-                    </Grid>
+                    <Label Content="Правый фильтр" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
+                    <ComboBox x:Name="StringComboBox_One_Right" Grid.Row="1" Style="{StaticResource ModernComboBox}" SelectionChanged="StringOneComboBox_SelectionChanged" ToolTip="Выберите первый критерий фильтрации"/>
+                    <ComboBox x:Name="StringComboBox_Two_Right" Grid.Row="2" Style="{StaticResource ModernComboBox}" SelectionChanged="StringTwoComboBox_SelectionChanged" ToolTip="Выберите второй критерий фильтрации"/>
+                    <TextBox x:Name="SearchTextBoxLog_One_Right" Grid.Row="3" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_One_Right_KeyDown" TextChanged="SearchTextBoxLog_One_Right_TextChanged" ToolTip="Введите текст для поиска"/>
+                    <TextBox x:Name="SearchTextBoxLog_Two_Right" Grid.Row="4" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_Two_Right_KeyDown" TextChanged="SearchTextBoxLog_Two_Right_TextChanged" ToolTip="Введите текст для поиска" Margin="0,4,0,0"/>
+
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                        <Button x:Name="SearchInFile_RightButton" Content="Найти" Width="80" Click="StartSearchInFilesButton_Right_Click" ToolTip="Поиск по правому фильтру" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="ClearButton_Right" Content="Очистить" Width="80" Click="ClearButton_Right_Click" ToolTip="Очистить правый фильтр" Style="{StaticResource ModernButton}"/>
+                    </StackPanel>
                 </Grid>
             </Border>
 
             <!-- Main Log Display -->
-            <Border Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Background="White" BorderBrush="#FFCCCCCC" BorderThickness="1" Margin="0,5,0,0" Padding="5">
-                <RichTextBox x:Name="LogRichTextBox" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" IsReadOnly="True" IsDocumentEnabled="True" Background="White" BorderThickness="0" FontFamily="Segoe UI" FontSize="14" TextChanged="LogRichTextBox_TextChanged" MouseMove="LogRichTextBox_MouseMove">
+            <Border Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Style="{StaticResource SectionBorder}" Margin="0,4,0,0">
+                <RichTextBox x:Name="LogRichTextBox" Style="{StaticResource ModernRichTextBox}" 
+                            IsDocumentEnabled="True" 
+                            TextChanged="LogRichTextBox_TextChanged" 
+                            MouseMove="LogRichTextBox_MouseMove">
                     <RichTextBox.Resources>
                         <Style TargetType="Paragraph">
-                            <Setter Property="Margin" Value="0,5,0,5"/>
+                            <Setter Property="Margin" Value="0,2,0,2"/>
                         </Style>
                     </RichTextBox.Resources>
                     <FlowDocument>
                         <Paragraph>
-                            <Run Text="Поработаем!"/>
+                            <Run Text="Готов к работе!"/>
                         </Paragraph>
                     </FlowDocument>
                 </RichTextBox>
             </Border>
 
-            <!-- Time Calculation Panel -->
-            <Border Grid.Row="0" Grid.Column="4" Grid.RowSpan="3" Background="White" BorderBrush="#FFCCCCCC" BorderThickness="1" Padding="5">
+            <!-- Results Panel -->
+            <Border Grid.Row="0" Grid.Column="4" Grid.RowSpan="3" Style="{StaticResource SectionBorder}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Label x:Name="StringCounter_Main" Content="0" Style="{StaticResource LabelStyle}"/>
-                    <DataGrid x:Name="ResultsDataGrid" Grid.Row="2" Margin="5" AutoGenerateColumns="False" HeadersVisibility="Column" ItemsSource="{Binding LogResults}" Style="{StaticResource DataGridStyle}">
+                    <Label Content="Результаты" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
+                    <DataGrid x:Name="ResultsDataGrid" Grid.Row="1" Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding LogResults}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Фильтры" Binding="{Binding Filters}" Width="*"/>
-                            <DataGridTextColumn Header="Всего " Binding="{Binding Counter}" Width="60"/>
-                            <DataGridTextColumn Header="Уникальных " Binding="{Binding FullCounter}" Width="80"/>
+                            <DataGridTextColumn Header="Всего" Binding="{Binding Counter}" Width="60"/>
+                            <DataGridTextColumn Header="Уникальных" Binding="{Binding FullCounter}" Width="80"/>
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.Header>
-                                    <Button Content="⎘" 
-                                        FontFamily="Segoe UI Symbol"
-                                        ToolTip="Копировать всю таблицу"
-                                        Click="CopyAllTableButton_Click"
-                                        Padding="1"
-                                        FontSize="12"
-                                        Background="Transparent"
-                                        BorderThickness="0"/>
+                                    <Button Content="⎘ Копировать всё" 
+                                            FontFamily="Segoe UI"
+                                            ToolTip="Копировать всю таблицу"
+                                            Click="CopyAllTableButton_Click"
+                                            Padding="4,2"
+                                            FontSize="12"
+                                            Style="{StaticResource ModernButton}"/>
                                 </DataGridTemplateColumn.Header>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Content="⎘" 
-                                            FontFamily="Segoe UI Symbol"
-                                            ToolTip="Копировать строку"
-                                            Click="CopyRowButton_Click"
-                                            Padding="1"
-                                            FontSize="16"
-                                            Background="Transparent"
-                                            BorderThickness="0"/>
+                                                FontFamily="Segoe UI Symbol"
+                                                ToolTip="Копировать строку"
+                                                Click="CopyRowButton_Click"
+                                                Padding="2"
+                                                FontSize="12"
+                                                Style="{StaticResource ModernButton}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -378,9 +430,9 @@
                 </Grid>
             </Border>
 
-            <StatusBar Grid.Row="4" Grid.ColumnSpan="3" Background="#FFF0F0F0">
+            <StatusBar Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5">
                 <StatusBarItem>
-                    <TextBlock x:Name="StatusText" Text="Готово" FontSize="12"/> 
+                    <TextBlock x:Name="StatusText" Text="Готово" Style="{StaticResource ModernTextBlock}" Foreground="White"/>
                 </StatusBarItem>
             </StatusBar>
         </Grid>
