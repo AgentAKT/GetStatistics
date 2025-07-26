@@ -39,8 +39,10 @@ namespace GetStatistics
         public SshClient _sshClient;
         private bool _isReadingLogs = false;
         private string _currentLogFilePath = "";
+        private string _currentLogDirectory; // Путь к папке с логами
+        private string _currentLogFile;     // Только имя файла
+        private string _currentLogFolderPath; // Хранит только путь к папке
 
-        
         public MainWindow()
         {
             InitializeComponent();
@@ -187,23 +189,22 @@ namespace GetStatistics
 
         private async void LogList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Проверяем выбор в обоих контролах
-            bool isFileSelected = LogList.SelectedItem is string selectedFile;
-            //bool isServerSelected = ServerComboBox.SelectedItem is ServerConfig server;
-
-            if (!isFileSelected)
+            if (!(LogList.SelectedItem is string selectedFile))
             {
-                // Если файл не выбран - выходим
                 return;
             }
 
-            selectedFile = (string)LogList.SelectedItem;
- 
-            // Если сервер не выбран, используем локальный путь из OpenFolder
-            _currentLogFilePath = Path.Combine(_currentLogFilePath ?? "", selectedFile);
-            await _logFileService.LoadLogFile(_currentLogFilePath, new ServerConfig { Protocol = "Local" });
-            return;
+            // Формируем путь к файлу относительно папки
+            _currentLogFilePath = Path.Combine(_currentLogFolderPath, selectedFile);
 
+            try
+            {
+                await _logFileService.LoadLogFile(_currentLogFilePath, new ServerConfig { Protocol = "Local" });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки файла: {ex.Message}");
+            }
         }
 
         private bool CheckComboBoxes()
@@ -606,14 +607,13 @@ namespace GetStatistics
 
         private async void OpenFolder_Click(object sender, RoutedEventArgs e)
         {
-            _currentLogFilePath = OpenFolderDialog();
-            //comboBoxFolders.ItemsSource = null;
-            //ServerComboBox.ItemsSource = null;
+            string selectedFolder = OpenFolderDialog();
 
-            if (!string.IsNullOrEmpty(_currentLogFilePath))
+            if (!string.IsNullOrEmpty(selectedFolder))
             {
-                Console.WriteLine(_currentLogFilePath);
-                await GetLocalFiles(_currentLogFilePath);
+                _currentLogFolderPath = selectedFolder; // Сохраняем только путь к папке
+                Console.WriteLine(_currentLogFolderPath);
+                await GetLocalFiles(_currentLogFolderPath);
                 ApplyFilters();
             }
             else
@@ -749,7 +749,7 @@ namespace GetStatistics
             // Разбиваем текст на строки
             string[] lines = logText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-            // Регулярное выражение для поиска временных меток (формат HH:MM:SS или HH:MM:SS.mmm)
+            // Регулярное выражение для поиска временных меток
             Regex timeRegex = new Regex(@"\b(\d{2}):\d{2}:\d{2}(?:\.\d{3})?\b");
 
             // Анализируем каждую строку
@@ -769,52 +769,69 @@ namespace GetStatistics
                 }
             }
 
-            // Находим максимальное количество строк для масштабирования диаграммы
+            // Находим максимальное количество строк
             int maxCount = hourlyStats.Values.Max();
-            if (maxCount == 0) maxCount = 1; // Чтобы избежать деления на ноль
+            if (maxCount == 0) maxCount = 1;
 
-            // Создаем FlowDocument для вывода результатов
-            FlowDocument flowDoc = new FlowDocument();
-            flowDoc.PagePadding = new Thickness(10);
-            flowDoc.FontFamily = new FontFamily("Consolas, Courier New");
+            // Определяем максимальную ширину чисел
+            int maxNumberWidth = maxCount.ToString().Length;
 
-            // Добавляем заголовок
+            // Создаем FlowDocument
+            FlowDocument flowDoc = new FlowDocument
+            {
+                PagePadding = new Thickness(10),
+                FontFamily = new FontFamily("Consolas"),
+                Background = Brushes.White
+            };
+
+            // Заголовок
             Paragraph header = new Paragraph(new Run("Статистика по часам:"))
             {
                 FontWeight = FontWeights.Bold,
                 FontSize = 14,
-                Margin = new Thickness(0, 0, 0, 10)
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 15)
             };
             flowDoc.Blocks.Add(header);
 
-            // Добавляем статистику для каждого часа
+            // Добавляем статистику с выравниванием
             for (int hour = 0; hour < 24; hour++)
             {
                 int count = hourlyStats[hour];
                 double percentage = (double)count / maxCount;
-                int barLength = (int)(percentage * 20); // Максимальная длина бара - 20 символов
+                int barLength = (int)(percentage * 20);
 
                 string hourStr = hour.ToString("00");
                 string bar = new string('█', barLength);
-                string line = $"{hourStr}:00 |{bar,-20} {count}";
+                string countStr = count.ToString().PadLeft(maxNumberWidth);
 
-                Paragraph para = new Paragraph(new Run(line));
+                // Формируем строку с фиксированными отступами
+                string line = $"{hourStr}:00 |{bar,-20} {countStr}";
+
+                Paragraph para = new Paragraph(new Run(line))
+                {
+                    Margin = new Thickness(0, 3, 0, 3) // Отступы между строками
+                };
                 flowDoc.Blocks.Add(para);
             }
 
-            // Создаем новое окно для отображения статистики
+            // Создаем окно статистики
             Window statsWindow = new Window
             {
                 Title = "Статистика по часам",
-                Width = 400,
-                Height = 600,
+                Width = 450,
+                Height = 650,
+                MinWidth = 400,
+                MinHeight = 400,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                Background = (Brush)FindResource("LightBackground"),
                 Content = new FlowDocumentScrollViewer
                 {
                     Document = flowDoc,
-                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto
-                },
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = this
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    Style = (Style)FindResource("ModernFlowDocumentViewer")
+                }
             };
 
             statsWindow.Show();

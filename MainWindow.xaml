@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Log Navigator"
-        Height="650"
-        Width="1300"
+        Height="800"
+        Width="1600"
         MinWidth="1100"
         MinHeight="600"
         WindowStartupLocation="CenterScreen"
@@ -22,7 +22,14 @@
         <SolidColorBrush x:Key="PressedColor" Color="#FFBBDEFB"/>
         <SolidColorBrush x:Key="TextColor" Color="#FF333333"/>
         <SolidColorBrush x:Key="AccentColor" Color="#FFE74C3C"/>
-
+        
+        <Style x:Key="ModernFlowDocumentViewer" TargetType="FlowDocumentScrollViewer">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+        
         <!-- Стили -->
         <Style TargetType="Button" x:Key="ModernButton">
             <Setter Property="FontFamily" Value="Segoe UI"/>
@@ -128,6 +135,7 @@
             <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Height" Value="40"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
@@ -268,7 +276,7 @@
                 <ColumnDefinition Width="10"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="600"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -291,8 +299,8 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Button x:Name="OpenFolder" Grid.Column="0" Content="📁 Открыть папку" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}"/>
-                        <Button x:Name="SSHConnectionButton" Grid.Column="1" Content="SSH подключение" MinWidth="60" Click="StartSearchInFilesButton_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="OpenFolder" Grid.Column="0" Content="📁 Папка" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="SSHConnectionButton" Grid.Column="1" Content="SSH" MinWidth="60" Click="StartSearchInFilesButton_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}"/>
                     </Grid>
                     <CheckBox x:Name="TodayCheckBox" Grid.Row="1" Content="За текущую дату" Checked="TodayCheckBox_Checked" Unchecked="TodayCheckBox_Unchecked" Style="{StaticResource ModernCheckBox}"/>
                     <Grid Grid.Row="2" Margin="0,4,0,4">
@@ -400,9 +408,9 @@
                     <Label Content="Результаты" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
                     <DataGrid x:Name="ResultsDataGrid" Grid.Row="1" Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding LogResults}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Фильтры" Binding="{Binding Filters}" Width="*"/>
-                            <DataGridTextColumn Header="Всего" Binding="{Binding Counter}" Width="60"/>
-                            <DataGridTextColumn Header="Уникальных" Binding="{Binding FullCounter}" Width="80"/>
+                            <DataGridTextColumn Header="Фильтры" Binding="{Binding Filters}" Width="230"/>
+                            <DataGridTextColumn Header="Всего" Binding="{Binding Counter}" Width="90"/>
+                            <DataGridTextColumn Header="Уникальных" Binding="{Binding FullCounter}" Width="90"/>
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.Header>
                                     <Button Content="⎘ Копировать всё" 
@@ -411,11 +419,12 @@
                                             Click="CopyAllTableButton_Click"
                                             Padding="4,2"
                                             FontSize="12"
+                                             Width="130"
                                             Style="{StaticResource ModernButton}"/>
                                 </DataGridTemplateColumn.Header>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="⎘" 
+                                        <Button Content="⎘ Копировать" 
                                                 FontFamily="Segoe UI Symbol"
                                                 ToolTip="Копировать строку"
                                                 Click="CopyRowButton_Click"
