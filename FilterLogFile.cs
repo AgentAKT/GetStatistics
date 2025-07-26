@@ -8,8 +8,9 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Collections.Generic;
 using System.Windows;
+using System.Linq;
 
-internal class FilterLogFile
+public class FilterLogFile
 {
     private readonly MainWindow _mainWindow;
     private readonly RichTextBox _logRichTextBox;
@@ -27,6 +28,11 @@ internal class FilterLogFile
         _logContent = logContent;
     }
 
+    public void MainWindow(string logContent)
+    {
+        _logContent = logContent;
+    }
+
     public void ApplyLogFilters(FilterParameters filters, bool isLeftFilter)
     {
         if (string.IsNullOrEmpty(_logContent))
@@ -34,7 +40,7 @@ internal class FilterLogFile
 
         var filteredContent = FilterContent(filters, isLeftFilter);
         UpdateRichTextBox(filteredContent, filters, isLeftFilter);
-        AddToResultsDataGrid(filters, _counter, 100);
+        AddToResultsDataGrid(filters, _counter, _counter);
     }
 
     private string FilterContent(FilterParameters filters, bool isLeftFilter)
@@ -55,6 +61,7 @@ internal class FilterLogFile
         }
 
         _mainWindow.UpdateStatusText(_counter.ToString());
+        _mainWindow.StringCounter_Main.Content = _counter.ToString();
         return result.ToString();
     }
 
@@ -231,22 +238,84 @@ internal class FilterLogFile
         });
     }
 
+    public void CopySingleRowToClipboard(FilterResultItem item)
+    {
+        if (item == null)
+            return;
+
+        if (!_mainWindow.CheckAccess())
+        {
+            _mainWindow.Dispatcher.Invoke(() => CopySingleRowToClipboard(item));
+            return;
+        }
+
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Фильтры: {item.Filters}");
+            sb.AppendLine($"Счетчик 1: {item.Counter}");
+            sb.AppendLine($"Счетчик 2: {item.FullCounter}");
+
+            Clipboard.SetText(sb.ToString().TrimEnd());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Ошибка при копировании строки: {ex.Message}");
+            // MessageBox.Show("Не удалось скопировать строку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    public void CopyResultsToClipboard()
+    {
+        if (_mainWindow.ResultsDataGrid == null || !_mainWindow.ResultsDataGrid.CheckAccess())
+            return;
+
+        _mainWindow.ResultsDataGrid.Dispatcher.Invoke(() =>
+        {
+            if (_mainWindow.ResultsDataGrid.ItemsSource is IEnumerable<FilterResultItem> items && items.Any())
+            {
+                var sb = new StringBuilder();
+
+                foreach (var item in items)
+                {
+                    sb.AppendLine($"Фильтры: {item.Filters}");
+                    sb.AppendLine($"Счетчик 1: {item.Counter}");
+                    sb.AppendLine($"Счетчик 2: {item.FullCounter}");
+                    sb.AppendLine(); // Пустая строка между записями
+                }
+
+                try
+                {
+                    Clipboard.SetText(sb.ToString().TrimEnd()); // Удаляем последний перенос строки
+                }
+                catch (Exception ex)
+                {
+                    // Обработка ошибок доступа к буферу обмена
+                    System.Diagnostics.Debug.WriteLine($"Ошибка при копировании в буфер обмена: {ex.Message}");
+                    // Можно добавить MessageBox.Show() для уведомления пользователя
+                }
+            }
+        });
+    }
+
     private string FormatFilters(FilterParameters filters)
     {
         var sb = new StringBuilder();
 
         if (!string.IsNullOrEmpty(filters.Filter_One))
-            sb.Append($"1: {filters.Filter_One} ");
+            sb.Append($"1: {filters.Filter_One} \n");
 
         if (!string.IsNullOrEmpty(filters.Filter_Two))
-            sb.Append($"2: {filters.Filter_Two} ");
+            sb.Append($"2: {filters.Filter_Two} \n");
 
         if (!string.IsNullOrEmpty(filters.SearchText_One))
-            sb.Append($"S1: {filters.SearchText_One} ");
+            sb.Append($"S1: {filters.SearchText_One} \n");
 
         if (!string.IsNullOrEmpty(filters.SearchText_Two))
-            sb.Append($"S2: {filters.SearchText_Two}");
+            sb.Append($"S2: {filters.SearchText_Two} \n");
 
         return sb.ToString().Trim();
     }
+
+
 }

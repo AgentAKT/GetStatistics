@@ -14,6 +14,8 @@ using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.Windows.Controls.Primitives;
 using GetStatistics.Models;
+using static FilterLogFile;
+using System.Windows.Media;
 
 
 namespace GetStatistics
@@ -33,7 +35,7 @@ namespace GetStatistics
         private LogFileService _logFileService;
         private readonly QuoteManager _quoteManager;
         private ConfigLoader _configLoader;
-
+        private FilterLogFile _filterLogFile;
         public SshClient _sshClient;
         private bool _isReadingLogs = false;
         private string _currentLogFilePath = "";
@@ -50,6 +52,7 @@ namespace GetStatistics
             LoadConfig();
             _networkConnection = new NetworkConnection();
             _filterFiles = new FilterFiles(this);
+            _filterLogFile = new FilterLogFile(LogRichTextBox, this);
             _logFileService = new LogFileService(
                 LogRichTextBox,
                 StatusText,
@@ -479,59 +482,47 @@ namespace GetStatistics
 
         private void CopyAllTableButton_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                if (_logResults == null || _logResults.Count == 0)
-                {
-                    MessageBox.Show("Нет данных для копирования");
-                    return;
-                }
+            _filterLogFile.CopyResultsToClipboard();
 
-                // Создаем строку с заголовками колонок
-                var headers = string.Join("\t", ResultsDataGrid.Columns
-                    .Where(c => c.Header != null && c.Header.ToString() != "⎘")
-                    .Select(c => c.Header.ToString()));
+            //try
+            //{
+            //    if (_logResults == null || _logResults.Count == 0)
+            //    {
+            //        MessageBox.Show("Нет данных для копирования");
+            //        return;
+            //    }
 
-                // Собираем все данные
-                var dataLines = _logResults.Select(row =>
-                    $"{row.LineText1}\n{row.LineText2}\n{row.Result}\n");
+            //    // Создаем строку с заголовками колонок
+            //    var headers = string.Join("\t", ResultsDataGrid.Columns
+            //        .Where(c => c.Header != null && c.Header.ToString() != "⎘")
+            //        .Select(c => c.Header.ToString()));
 
-                // Объединяем в один текст
-                var allText = string.Join(Environment.NewLine, dataLines);
+            //    // Собираем все данные
+            //    var dataLines = _logResults.Select(row =>
+            //        $"{row.LineText1}\n{row.LineText2}\n{row.Result}\n");
 
-                // Копируем в буфер обмена
-                Clipboard.SetText(allText);
+            //    // Объединяем в один текст
+            //    var allText = string.Join(Environment.NewLine, dataLines);
 
-                // Показываем уведомление
-                ShowCopyNotification("Все данные скопированы!");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при копировании: {ex.Message}");
-            }
-        }
+            //    // Копируем в буфер обмена
+            //    Clipboard.SetText(allText);
 
-        // Обновленный метод для уведомлений
-        private void ShowCopyNotification(string message = "Данные скопированы!")
-        {
-            var notification = new ToolTip
-            {
-                Content = message,
-                StaysOpen = false,
-                IsOpen = true,
-                Placement = PlacementMode.Mouse
-            };
-
-            Task.Delay(1000).ContinueWith(_ =>
-                Dispatcher.Invoke(() => notification.IsOpen = false));
+            //    // Показываем уведомление
+            //    ShowCopyNotification("Все данные скопированы!");
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show($"Ошибка при копировании: {ex.Message}");
+            //}
         }
 
         // Копирование по кнопке
         private void CopyRowButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.DataContext is LogResult row)
+            var selectedItem = ResultsDataGrid.SelectedItem as FilterResultItem;
+            if (selectedItem != null)
             {
-                Clipboard.SetText(row.GetCopyText());
+                _filterLogFile.CopySingleRowToClipboard(selectedItem);
                 ShowCopyNotification();
             }
         }
@@ -564,10 +555,10 @@ namespace GetStatistics
 
         public class LogResult
         {
-            public string LineText1 { get; set; }  // Лог строка 1
-            public string LineText2 { get; set; } // Лог строка 2
-            public string Result { get; set; } // Числовой результат
-            public string GetCopyText() => $"{LineText1}\n{LineText2}\n{Result}";
+            public string Filters { get; set; }  // Лог строка 1
+            public string Counter { get; set; } // Лог строка 2
+            public string FullCounter { get; set; } // Числовой результат
+            public string GetCopyText() => $"{Filters}\n{Counter}\n{FullCounter}";
         }
 
         private void OpenServersWindowBtn_Click(object sender, RoutedEventArgs e)
@@ -738,6 +729,95 @@ namespace GetStatistics
         {
             var (quote, author) = _quoteManager.GetRandomQuote();
             DisplayQuoteInRichTextBox(LogRichTextBox, quote, author);
+        }
+
+        private void ShowHourlyStatistics_Click(object sender, RoutedEventArgs e)
+        {
+            // Получаем текст из RichTextBox
+            string logText = new TextRange(LogRichTextBox.Document.ContentStart,
+                                         LogRichTextBox.Document.ContentEnd).Text;
+
+            // Словарь для хранения количества строк по часам
+            Dictionary<int, int> hourlyStats = new Dictionary<int, int>();
+
+            // Инициализируем словарь для всех 24 часов
+            for (int hour = 0; hour < 24; hour++)
+            {
+                hourlyStats[hour] = 0;
+            }
+
+            // Разбиваем текст на строки
+            string[] lines = logText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // Регулярное выражение для поиска временных меток (формат HH:MM:SS или HH:MM:SS.mmm)
+            Regex timeRegex = new Regex(@"\b(\d{2}):\d{2}:\d{2}(?:\.\d{3})?\b");
+
+            // Анализируем каждую строку
+            foreach (string line in lines)
+            {
+                Match match = timeRegex.Match(line);
+                if (match.Success)
+                {
+                    string timePart = match.Groups[1].Value;
+                    if (int.TryParse(timePart, out int hour))
+                    {
+                        if (hour >= 0 && hour < 24)
+                        {
+                            hourlyStats[hour]++;
+                        }
+                    }
+                }
+            }
+
+            // Находим максимальное количество строк для масштабирования диаграммы
+            int maxCount = hourlyStats.Values.Max();
+            if (maxCount == 0) maxCount = 1; // Чтобы избежать деления на ноль
+
+            // Создаем FlowDocument для вывода результатов
+            FlowDocument flowDoc = new FlowDocument();
+            flowDoc.PagePadding = new Thickness(10);
+            flowDoc.FontFamily = new FontFamily("Consolas, Courier New");
+
+            // Добавляем заголовок
+            Paragraph header = new Paragraph(new Run("Статистика по часам:"))
+            {
+                FontWeight = FontWeights.Bold,
+                FontSize = 14,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            flowDoc.Blocks.Add(header);
+
+            // Добавляем статистику для каждого часа
+            for (int hour = 0; hour < 24; hour++)
+            {
+                int count = hourlyStats[hour];
+                double percentage = (double)count / maxCount;
+                int barLength = (int)(percentage * 20); // Максимальная длина бара - 20 символов
+
+                string hourStr = hour.ToString("00");
+                string bar = new string('█', barLength);
+                string line = $"{hourStr}:00 |{bar,-20} {count}";
+
+                Paragraph para = new Paragraph(new Run(line));
+                flowDoc.Blocks.Add(para);
+            }
+
+            // Создаем новое окно для отображения статистики
+            Window statsWindow = new Window
+            {
+                Title = "Статистика по часам",
+                Width = 400,
+                Height = 600,
+                Content = new FlowDocumentScrollViewer
+                {
+                    Document = flowDoc,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+                },
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this
+            };
+
+            statsWindow.Show();
         }
     }
 }
