@@ -120,3 +120,6 @@ C:\Users\Alexander\Source\Repos\GetStatistics\obj\Debug\GetStatistics.csproj.Cor
 C:\Users\Alexander\Source\Repos\GetStatistics\obj\Debug\GetStati.68069F64.Up2Date
 C:\Users\Alexander\Source\Repos\GetStatistics\obj\Debug\LogNavigator.exe
 C:\Users\Alexander\Source\Repos\GetStatistics\obj\Debug\LogNavigator.pdb
+C:\Users\Alexander\Source\Repos\GetStatistics\obj\Debug\SSHConnectionWindow.baml
+C:\Users\Alexander\Source\Repos\GetStatistics\obj\Debug\SSHConnectionWindow.g.cs
+C:\Users\Alexander\Source\Repos\GetStatistics\obj\Debug\App.baml

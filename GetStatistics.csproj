@@ -155,6 +155,9 @@
     <Compile Include="ServersWindow.xaml.cs">
       <DependentUpon>ServersWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SSHConnectionWindow.xaml.cs">
+      <DependentUpon>SSHConnectionWindow.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -169,6 +172,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="ServersWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SSHConnectionWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

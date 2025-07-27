@@ -884,5 +884,13 @@ namespace GetStatistics
 
             statsWindow.Show();
         }
+
+        private void OpenSSHConnectionWindow_Click(object sender, RoutedEventArgs e)
+        {
+            SSHConnectionWindow sshConnectionWindow = new SSHConnectionWindow();
+
+            // Показываем окно
+            sshConnectionWindow.Show();
+        }
     }
 }
