@@ -302,17 +302,15 @@
                         <Button x:Name="OpenFolder" Grid.Column="0" Content="📁 Папка" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}"/>
                         <Button x:Name="SSHConnectionButton" Grid.Column="1" Content="SSH" MinWidth="60" Click="StartSearchInFilesButton_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}"/>
                     </Grid>
-                    <CheckBox x:Name="TodayCheckBox" Grid.Row="1" Content="За текущую дату" Checked="TodayCheckBox_Checked" Unchecked="TodayCheckBox_Unchecked" Style="{StaticResource ModernCheckBox}"/>
-                    <Grid Grid.Row="2" Margin="0,4,0,4">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBox x:Name="SearchTextBox" Grid.Row="0" Style="{StaticResource ModernTextBox}" TextChanged="SearchTextBox_TextChanged" ToolTip="Введите текст для поиска"/>
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
-                            <Button x:Name="StartSearchInFilesButton" Content="Найти" MinWidth="60" Click="StartSearchInFilesButton_Click" ToolTip="Поиск по содержимому всех файлов в папке" Style="{StaticResource ModernButton}"/>
-                        </StackPanel>
+                    <Grid Grid.Row="1" Margin="0,4,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="SearchTextBox" Grid.Column="0" Style="{StaticResource ModernTextBox}" TextChanged="SearchTextBox_TextChanged" ToolTip="Введите текст для поиска"/>
+                        <Button x:Name="StartSearchInFilesButton" Grid.Column="1" Content="Найти" MinWidth="60" Click="StartSearchInFilesButton_Click" ToolTip="Поиск по содержимому всех файлов в папке" Style="{StaticResource ModernButton}"/>
                     </Grid>
+                    <CheckBox x:Name="TodayCheckBox" Grid.Row="2" Content="За текущую дату" Checked="TodayCheckBox_Checked" Unchecked="TodayCheckBox_Unchecked" Style="{StaticResource ModernCheckBox}"/>
                     <ListBox x:Name="LogList" Grid.Row="3" Style="{StaticResource ModernListBox}" SelectionChanged="LogList_SelectionChanged"/>
                 </Grid>
             </Border>
@@ -327,7 +325,14 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Левый фильтр" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="10" Height="10" Grid.Column="0" Fill="Yellow" Stroke="Gray" DockPanel.Dock="Left" Margin="0,0,5,0"/>
+                        <Label Content="Левый фильтр " Grid.Column="1" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
+                    </Grid>
                     <ComboBox x:Name="StringComboBox_One_Left" Grid.Row="1" Style="{StaticResource ModernComboBox}" SelectionChanged="StringOneComboBox_SelectionChanged" ToolTip="Выберите первый критерий фильтрации"/>
                     <ComboBox x:Name="StringComboBox_Two_Left" Grid.Row="2" Style="{StaticResource ModernComboBox}" SelectionChanged="StringTwoComboBox_SelectionChanged" ToolTip="Выберите второй критерий фильтрации"/>
                     <TextBox x:Name="SearchTextBoxLog_One_Left" Grid.Row="3" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_One_Left_KeyDown" TextChanged="SearchTextBoxLog_One_Left_TextChanged" ToolTip="Введите текст для поиска"/>
@@ -366,7 +371,14 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Правый фильтр" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="10" Height="10" Grid.Column="0" Fill="LightBlue" Stroke="Gray" DockPanel.Dock="Left" Margin="0,0,5,0"/>
+                        <Label Content="Правый фильтр " Grid.Column="1" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
+                    </Grid>
                     <ComboBox x:Name="StringComboBox_One_Right" Grid.Row="1" Style="{StaticResource ModernComboBox}" SelectionChanged="StringOneComboBox_SelectionChanged" ToolTip="Выберите первый критерий фильтрации"/>
                     <ComboBox x:Name="StringComboBox_Two_Right" Grid.Row="2" Style="{StaticResource ModernComboBox}" SelectionChanged="StringTwoComboBox_SelectionChanged" ToolTip="Выберите второй критерий фильтрации"/>
                     <TextBox x:Name="SearchTextBoxLog_One_Right" Grid.Row="3" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_One_Right_KeyDown" TextChanged="SearchTextBoxLog_One_Right_TextChanged" ToolTip="Введите текст для поиска"/>

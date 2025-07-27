@@ -316,9 +316,9 @@ namespace GetStatistics
                 //}
                 //else
                 //{
-                    await LoadLocalFile(_currentLogFilePath);
-                    StatusText.Text = "Сортировка по левому фильтру...";
-                    StartSearchInFilesButton_Left_Click(sender, e);
+                await LoadLocalFile(_currentLogFilePath);
+                StatusText.Text = "Сортировка по левому фильтру...";
+                StartSearchInFilesButton_Left_Click(sender, e);
                 //}
             }
         }
@@ -367,22 +367,22 @@ namespace GetStatistics
 
         private async void StringTwoComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            
+
         }
 
         private async void StringOneComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-           
+
         }
 
         private async void StringOneComboBox_Right_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            
+
         }
 
         private async void StringTwoComboBox_Right_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            
+
         }
 
         private void SearchInFile_LeftButton_Click(object sender, RoutedEventArgs e)
@@ -437,7 +437,7 @@ namespace GetStatistics
                 : null;
         }
 
-        
+
 
         // Получает начало строки для данного TextPointer
         private TextPointer GetLineStart(TextPointer pointer)
@@ -587,6 +587,7 @@ namespace GetStatistics
 
         private void StartSearchInFilesButton_Click(object sender, RoutedEventArgs e)
         {
+            OpenServersWindowBtn_Click(sender, e);
         }
 
         private string OpenFolderDialog()
@@ -633,7 +634,7 @@ namespace GetStatistics
         }
 
 
-        
+
 
         private void SearchTextBoxLog_Two_Left_KeyDown(object sender, KeyEventArgs e)
         {
@@ -693,7 +694,7 @@ namespace GetStatistics
             if (e.Key == Key.Enter) StartSearchInFilesButton_Right_Click(sender, e);
         }
 
-        
+
 
         private void DisplayQuoteInRichTextBox(RichTextBox richTextBox, string quote, string author)
         {
@@ -788,7 +789,7 @@ namespace GetStatistics
             Paragraph header = new Paragraph(new Run("Статистика по часам:"))
             {
                 FontWeight = FontWeights.Bold,
-                FontSize = 14,
+                FontSize = 12,
                 TextAlignment = TextAlignment.Center,
                 Margin = new Thickness(0, 0, 0, 15)
             };
@@ -815,23 +816,70 @@ namespace GetStatistics
                 flowDoc.Blocks.Add(para);
             }
 
+            // Создаем FlowDocumentScrollViewer
+            FlowDocumentScrollViewer documentViewer = new FlowDocumentScrollViewer
+            {
+                Document = flowDoc,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Style = (Style)FindResource("ModernFlowDocumentViewer")
+            };
+
+            // Создаем кнопку "Копировать"
+            Button copyButton = new Button
+            {
+                Content = "Копировать статистику",
+                Margin = new Thickness(5),
+                Padding = new Thickness(8, 2, 8, 2),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Style = (Style)FindResource("ModernButton")
+            };
+
+            // Обработчик нажатия на кнопку
+            copyButton.Click += (s, args) =>
+            {
+                // Получаем весь текст из FlowDocument
+                string fullText = new TextRange(
+                    flowDoc.ContentStart,
+                    flowDoc.ContentEnd
+                ).Text;
+
+                // Копируем в буфер обмена
+                try
+                {
+                    Clipboard.SetText(fullText);
+                    MessageBox.Show("Статистика скопирована в буфер обмена!", "Успех",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка копирования: {ex.Message}", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            };
+
+            // Создаем контейнер с кнопкой и содержимым
+            DockPanel container = new DockPanel
+            {
+                LastChildFill = true
+            };
+
+            // Размещаем кнопку внизу окна
+            DockPanel.SetDock(copyButton, Dock.Bottom);
+            container.Children.Add(copyButton);
+            container.Children.Add(documentViewer);
+
             // Создаем окно статистики
             Window statsWindow = new Window
             {
                 Title = "Статистика по часам",
                 Width = 450,
-                Height = 650,
+                Height = 660,
                 MinWidth = 400,
                 MinHeight = 400,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 Background = (Brush)FindResource("LightBackground"),
-                Content = new FlowDocumentScrollViewer
-                {
-                    Document = flowDoc,
-                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                    Style = (Style)FindResource("ModernFlowDocumentViewer")
-                }
+                Content = container  // Используем контейнер с кнопкой и содержимым
             };
 
             statsWindow.Show();
