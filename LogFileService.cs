@@ -4,6 +4,7 @@ using Renci.SshNet;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 
 public class LogFileService
@@ -74,14 +75,29 @@ public class LogFileService
 
     private async Task<string> ReadLocalFile(string filePath)
     {
-        using (var fileStream = new FileStream(
-            filePath,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.ReadWrite))
-        using (var streamReader = new StreamReader(fileStream))
+        try
         {
-            return await streamReader.ReadToEndAsync();
+            // Показываем индикатор загрузки
+            _mainWindow.StatusProgressBar.Visibility = Visibility.Visible;
+            _mainWindow.StatusProgressBar.IsIndeterminate = true; // Бесконечная анимация
+            _mainWindow.StatusText.Text = "Чтение файла...";
+
+            using (var fileStream = new FileStream(
+                filePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite))
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                return await streamReader.ReadToEndAsync();
+            }
+        }
+        finally
+        {
+            // Скрываем индикатор после завершения (успешного или с ошибкой)
+            _mainWindow.StatusProgressBar.Visibility = Visibility.Collapsed;
+            _mainWindow.StatusProgressBar.IsIndeterminate = false;
+            _mainWindow.StatusText.Text = "Готово";
         }
     }
 

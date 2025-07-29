@@ -210,7 +210,15 @@
 
             <StatusBar Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5">
                 <StatusBarItem>
-                    <TextBlock x:Name="StatusText" Text="Готово" Style="{StaticResource ModernTextBlock}" Foreground="White"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <ProgressBar x:Name="StatusProgressBar" 
+                            Width="100" 
+                            Height="16" 
+                            IsIndeterminate="False" 
+                            Visibility="Collapsed"
+                            Margin="5,0"/>
+                        <TextBlock x:Name="StatusText" Text="Готово" Style="{StaticResource ModernTextBlock}" Foreground="White"/>
+                    </StackPanel>
                 </StatusBarItem>
             </StatusBar>
         </Grid>
