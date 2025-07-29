@@ -53,9 +53,11 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Button x:Name="OpenFolder" Grid.Column="0" Content="📁 Папка" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}"/>
-                        <Button x:Name="SSHConnectionButton" Grid.Column="1" Content="SSH" MinWidth="60" Click="OpenSSHConnectionWindow_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}" Height="26" Margin="4,4,4,0" VerticalAlignment="Top"/>
+                        <Button x:Name="OpenFolder" Grid.Column="0" Content="📁" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="OpenFolderCK11" Grid.Column="1" Content="CK-11" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="SSHConnectionButton" Grid.Column="2" Content="SSH" MinWidth="60" Click="OpenSSHConnectionWindow_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}" Height="26" Margin="4,4,4,0" VerticalAlignment="Top"/>
                     </Grid>
                     <Grid Grid.Row="1" Margin="0,4,0,4">
                         <Grid.ColumnDefinitions>

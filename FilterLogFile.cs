@@ -101,7 +101,7 @@ public class FilterLogFile
             {
                 // Словарь для хранения уникальных совпадений
                 var uniqueMatches = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
+                _counter = 0;
                 foreach (var line in lines)
                 {
                     // Проверяем, содержит ли строка все активные фильтры (кроме SearchText_One и SearchText_Two)
@@ -111,6 +111,7 @@ public class FilterLogFile
                         if (filter != filters.SearchText_One &&
                             filter != filters.SearchText_Two &&
                             !line.Contains(filter))
+                            
                         {
                             matchesAllFilters = false;
                             break;
@@ -140,12 +141,13 @@ public class FilterLogFile
                     if (!uniqueMatches.ContainsKey(matchedText))
                     {
                         uniqueMatches[matchedText] = fullLine;
-
+                        _counter++;
                         var span = new Span();
                         FindAndHighlightMatches(span, fullLine, activeFilters, highlightBrush);
                         paragraph.Inlines.Add(span);
                     }
                 }
+                _mainWindow.StringCounter_Main.Content = _counter.ToString();
             }
             else
             {

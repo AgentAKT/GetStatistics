@@ -608,19 +608,37 @@ namespace GetStatistics
 
         private async void OpenFolder_Click(object sender, RoutedEventArgs e)
         {
-            string selectedFolder = OpenFolderDialog();
+            string selectedFolder;
 
-            if (!string.IsNullOrEmpty(selectedFolder))
+            // Определяем, какая кнопка вызвала событие
+            if (sender == OpenFolderCK11)
             {
-                _currentLogFolderPath = selectedFolder; // Сохраняем только путь к папке
-                Console.WriteLine(_currentLogFolderPath);
-                await GetLocalFiles(_currentLogFolderPath);
-                ApplyFilters();
+                // Фиксированный путь для кнопки CK-11
+                selectedFolder = @"C:\Program Files\Monitel\CK-11\Client\Log";
+
+                // Проверяем существование папки
+                if (!Directory.Exists(selectedFolder))
+                {
+                    MessageBox.Show($"Папка не найдена: {selectedFolder}");
+                    return;
+                }
             }
             else
             {
-                MessageBox.Show("Выбор папки отменён.");
+                // Для обычной кнопки открываем диалог выбора папки
+                selectedFolder = OpenFolderDialog();
+
+                if (string.IsNullOrEmpty(selectedFolder))
+                {
+                    MessageBox.Show("Выбор папки отменён.");
+                    return;
+                }
             }
+
+            _currentLogFolderPath = selectedFolder;
+            Console.WriteLine(_currentLogFolderPath);
+            await GetLocalFiles(_currentLogFolderPath);
+            ApplyFilters();
         }
 
         public void UpdateStatusText(string text)
