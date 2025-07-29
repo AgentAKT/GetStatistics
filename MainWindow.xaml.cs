@@ -130,7 +130,7 @@ namespace GetStatistics
         }
 
         // Фильтр файлов по условию
-        public async void ApplyFilters()  // или async Task, если вызывается из другого async метода
+        public async void ApplyFilters()
         {
             var filteredFiles = _logFiles;
 
@@ -666,6 +666,7 @@ namespace GetStatistics
         {
             if (!string.IsNullOrEmpty(_currentLogFilePath))
             {
+                _isReadingLogs = false;
                 var content = File.ReadAllText(_currentLogFilePath);
                 _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: true);
             }
