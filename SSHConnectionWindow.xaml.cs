@@ -18,11 +18,12 @@ namespace GetStatistics
         }
 
         private List<SshConnection> _connections = new List<SshConnection>();
-
+        private MainWindow _mainWindow;
         public SSHConnectionWindow()
         {
             InitializeComponent();
             LoadConnections();
+            _mainWindow = new MainWindow();
         }
 
         private void LoadConnections()
@@ -59,8 +60,9 @@ namespace GetStatistics
 
         private void Connect_Click(object sender, RoutedEventArgs e)
         {
+            _mainWindow.isLocal = false;
             // Логика подключения
-            DialogResult = true;
+
             Close();
         }
 

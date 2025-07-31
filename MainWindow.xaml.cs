@@ -22,7 +22,7 @@ namespace GetStatistics
 {
     public partial class MainWindow : Window
     {
-
+        public bool isLocal = true;
         private readonly PathCombine _pathCombine;
         private Config _config;
         private List<string> _logFiles = new List<string>();
@@ -562,14 +562,6 @@ namespace GetStatistics
             public string GetCopyText() => $"{Filters}\n{Counter}\n{FullCounter}";
         }
 
-        private void OpenServersWindowBtn_Click(object sender, RoutedEventArgs e)
-        {
-            ServersWindow serversWindow = new ServersWindow(this);
-
-            // Показываем окно
-            serversWindow.Show();
-        }
-
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
 
@@ -583,11 +575,6 @@ namespace GetStatistics
         private void SearchTextBoxLog_Two_Left_TextChanged(object sender, TextChangedEventArgs e)
         {
 
-        }
-
-        private void StartSearchInFilesButton_Click(object sender, RoutedEventArgs e)
-        {
-            OpenServersWindowBtn_Click(sender, e);
         }
 
         private string OpenFolderDialog()
@@ -608,6 +595,7 @@ namespace GetStatistics
 
         private async void OpenFolder_Click(object sender, RoutedEventArgs e)
         {
+            
             string selectedFolder;
 
             // Определяем, какая кнопка вызвала событие
@@ -929,6 +917,7 @@ namespace GetStatistics
 
         private void OpenSSHConnectionWindow_Click(object sender, RoutedEventArgs e)
         {
+            isLocal = false;
             SSHConnectionWindow sshConnectionWindow = new SSHConnectionWindow();
 
             // Показываем окно

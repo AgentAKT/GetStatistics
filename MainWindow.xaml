@@ -20,7 +20,6 @@
                 <Separator/>
             </MenuItem>
             <MenuItem Header="_Настройки" Click="MenuItem_Click">
-                <MenuItem Header="_Настройки подключения" Click="OpenServersWindowBtn_Click"/>
             </MenuItem>
             <MenuItem Header="_Справка" Click="MenuItem_Click_1"/>
         </Menu>
@@ -65,7 +64,6 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="SearchTextBox" Grid.Column="0" Style="{StaticResource ModernTextBox}" TextChanged="SearchTextBox_TextChanged" ToolTip="Введите текст для поиска"/>
-                        <Button x:Name="StartSearchInFilesButton" Grid.Column="1" Content="Найти" MinWidth="60" Click="StartSearchInFilesButton_Click" ToolTip="Поиск по содержимому всех файлов в папке" Style="{StaticResource ModernButton}"/>
                     </Grid>
                     <CheckBox x:Name="TodayCheckBox" Grid.Row="2" Content="За текущую дату" Checked="TodayCheckBox_Checked" Unchecked="TodayCheckBox_Unchecked" Style="{StaticResource ModernCheckBox}"/>
                     <ListBox x:Name="LogList" Grid.Row="3" Style="{StaticResource ModernListBox}" SelectionChanged="LogList_SelectionChanged"/>
