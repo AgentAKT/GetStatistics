@@ -166,18 +166,19 @@
     }
   ],
   "String1": [
-    "change server role to main",
+    "RapidBus",
     "[HIS][DbConMgr] Got DB lock",
     "Запрос опции",
     "Master",
     "Делаю мастером командой оператора",
-    "addJVMToAllList",
-    "ERROR"
+    "GET /api/workorders/eventshub?id=",
+    "ERR",
+	"INF"
   ],
   "String2": [
-    "failed",
-    "exception",
+	"RapidBus",
+    "WS_TNEq",
     "WS_DispJournal",
-    "ERROR"
+    "WS_DefectJournal"
   ]
 }
