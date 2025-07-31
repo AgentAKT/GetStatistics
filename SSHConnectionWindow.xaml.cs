@@ -32,7 +32,7 @@ namespace GetStatistics
             // Например, из файла конфигурации или базы данных
             _connections = new List<SshConnection>
             {
-                new SshConnection { Name = "Production Server", Host = "prod.example.com", Username = "admin", Path = "/var/log" },
+                new SshConnection { Name = "Production Server", Host = "10.81.169.53", Username = "administrator", Path = "/var/log/CK-11", Password = "P@ssw0rd" },
                 new SshConnection { Name = "Test Server", Host = "test.example.com", Username = "tester", Path = "/home/tester/logs" }
             };
 
