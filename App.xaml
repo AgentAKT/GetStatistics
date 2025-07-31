@@ -5,7 +5,7 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <!-- Цветовая палитра -->
-            <SolidColorBrush x:Key="PrimaryColor" Color="#FF2C3E50"/>
+        <SolidColorBrush x:Key="PrimaryColor" Color="#4878a8"/>
             <SolidColorBrush x:Key="SecondaryColor" Color="#FF3498DB"/>
             <SolidColorBrush x:Key="LightBackground" Color="#FFF8F9FA"/>
             <SolidColorBrush x:Key="BorderColor" Color="#FFE0E0E0"/>
