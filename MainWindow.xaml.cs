@@ -667,8 +667,31 @@ namespace GetStatistics
             if (!string.IsNullOrEmpty(_currentLogFilePath))
             {
                 _isReadingLogs = false;
-                var content = File.ReadAllText(_currentLogFilePath);
-                _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: true);
+
+                try
+                {
+                    string content;
+                    using (var fileStream = new FileStream(
+                        _currentLogFilePath,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.ReadWrite)) // Разрешаем другим процессам читать и писать
+                    {
+                        using (var reader = new StreamReader(fileStream))
+                        {
+                            content = reader.ReadToEnd();
+                        }
+                    }
+
+                    _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: true);
+                }
+                catch (IOException ex)
+                {
+                    MessageBox.Show($"Не удалось прочитать файл логов: {ex.Message}",
+                                   "Ошибка",
+                                   MessageBoxButton.OK,
+                                   MessageBoxImage.Error);
+                }
             }
         }
 
