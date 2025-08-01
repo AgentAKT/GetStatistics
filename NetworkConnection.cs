@@ -38,7 +38,7 @@ namespace GetStatistics
                 if (_sshClient.IsConnected)
                 {
                     // Получаем файлы из server.Path
-                    var command = _sshClient.CreateCommand($"ls {server.Path} | grep -E '\\.log$|\\.txt$'");
+                    var command = _sshClient.CreateCommand($"ls {server.Path} | grep -E '\\.log$|\\.txt$|\\.usrlog$'");
                     var result = await Task.Run(() => command.Execute());
 
                     if (command.ExitStatus == 0)

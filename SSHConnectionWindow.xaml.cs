@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Net;
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -32,8 +33,8 @@ namespace GetStatistics
             // Например, из файла конфигурации или базы данных
             _connections = new List<SshConnection>
             {
-                new SshConnection { Name = "Production Server", Host = "10.81.169.53", Username = "administrator", Path = "/var/log/CK-11", Password = "P@ssw0rd" },
-                new SshConnection { Name = "Test Server", Host = "test.example.com", Username = "tester", Path = "/home/tester/logs" }
+                new SshConnection { Name = "UAT.ZES.SCADA1", Host = "10.81.169.53", Username = "administrator", Path = "/var/log/CK-11", Password = "P@ssw0rd" },
+                new SshConnection { Name = "UAT.ZES.SCADA2", Host = "10.81.169.54", Username = "administrator", Path = "/var/log/CK-11", Password = "P@ssw0rd" }
             };
 
             dgConnections.ItemsSource = _connections;
@@ -58,12 +59,33 @@ namespace GetStatistics
             MessageBox.Show("Проверка подключения...", "Тест подключения", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void Connect_Click(object sender, RoutedEventArgs e)
+        private async void Connect_Click(object sender, RoutedEventArgs e)
         {
             _mainWindow.isLocal = false;
-            // Логика подключения
+            if (Owner is MainWindow mainWindow)
+            {
+                try
+                {
+                    mainWindow.isLocal = false;
+                    var serverConfig = new ServerConfig
+                    {
+                        Host = txtHost.Text,
+                        Username = txtUsername.Text,
+                        Password = txtPassword.Password,
+                        Path = txtPath.Text
+                    };
 
-            Close();
+                    var logFiles = await mainWindow.ConnectViaSsh(serverConfig);
+                    mainWindow._currentLogFolderPath = ""; // Сбрасываем локальный путь
+                    mainWindow.UpdateLogList(logFiles);
+
+                    Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Ошибка SSH", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)

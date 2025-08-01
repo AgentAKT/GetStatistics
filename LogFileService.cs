@@ -29,47 +29,38 @@ public class LogFileService
         _mainWindow = mainWindow;
     }
 
-    public async Task LoadLogFile(string filePath, ServerConfig server)
+    public async Task LoadLogFile(string filePath, ServerConfig server, SshClient sshClient = null)
     {
         try
         {
             string content;
 
-            if (server.Protocol == "Local")
+            if (server.Protocol == "SSH" && sshClient != null && sshClient.IsConnected)
             {
-                content = await ReadLocalFile(filePath);
-                _statusText.Text = "Локальный файл загружен";
-            }
-            else if (server.Protocol == "SSH")
-            {
-                if (_mainWindow._sshClient == null)
-                {
-                    _statusText.Text = "SSH-клиент не инициализирован";
-                    Console.WriteLine("SSH-клиент не инициализирован");
-                    return;
-                }
+                var command = sshClient.CreateCommand($"cat '{filePath}'");
+                content = await Task.Run(() => command.Execute());
 
-                if (!_mainWindow._sshClient.IsConnected)
+                if (command.ExitStatus != 0)
                 {
-                    _statusText.Text = "SSH-соединение не активно";
-                    return;
+                    throw new Exception($"SSH error: {command.Error}");
                 }
-
-                content = await ReadSshFile(filePath);
-                _statusText.Text = "Файл прочитан по SSH";
             }
             else
             {
+                if (!File.Exists(filePath))
+                {
+                    throw new FileNotFoundException($"Файл не найден: {filePath}");
+                }
+
                 content = await ReadLocalFile(filePath);
-                _statusText.Text = "Папка открыта локально";
             }
 
-            ClearAndApplyFilters(content);
+            ApplyLogFilters(content, _logRichTextBox, true);
         }
         catch (Exception ex)
         {
             _statusText.Text = $"Ошибка: {ex.Message}";
-            Console.WriteLine($"Ошибка в LoadLogFile: {ex}");
+            throw; // Перебрасываем исключение для обработки в UI
         }
     }
 

@@ -41,7 +41,7 @@ namespace GetStatistics
         private string _currentLogFilePath = "";
         private string _currentLogDirectory; // Путь к папке с логами
         private string _currentLogFile;     // Только имя файла
-        private string _currentLogFolderPath; // Хранит только путь к папке
+        public string _currentLogFolderPath; // Хранит только путь к папке
 
         public MainWindow()
         {
@@ -128,7 +128,31 @@ namespace GetStatistics
 
             return logFiles;
         }
+        public void UpdateLogList(List<string> filePaths)
+        {
+            try
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    // Сохраняем полные пути
+                    _logFiles = filePaths;
 
+                    // Отображаем только имена файлов
+                    LogList.ItemsSource = filePaths.Select(Path.GetFileName).ToList();
+
+                    StatusText.Text = $"Найдено {filePaths.Count} файлов";
+
+                    // Сбрасываем текущий выбранный файл
+                    _currentLogFilePath = string.Empty;
+                    LogList.UnselectAll();
+                });
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() =>
+                    StatusText.Text = $"Ошибка обновления списка: {ex.Message}");
+            }
+        }
         // Фильтр файлов по условию
         public async void ApplyFilters()
         {
@@ -189,21 +213,44 @@ namespace GetStatistics
 
         private async void LogList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!(LogList.SelectedItem is string selectedFile))
-            {
-                return;
-            }
-
-            // Формируем путь к файлу относительно папки
-            _currentLogFilePath = Path.Combine(_currentLogFolderPath, selectedFile);
+            if (!(LogList.SelectedItem is string selectedFileName)) return;
 
             try
             {
-                await _logFileService.LoadLogFile(_currentLogFilePath, new ServerConfig { Protocol = "Local" });
+                if (_sshClient != null && _sshClient.IsConnected)
+                {
+                    _logFiles = _logFiles.Select(f => f.Replace('\\', '/')).ToList();
+                    // Для SSH используем полный путь из _logFiles
+                    _currentLogFilePath = _logFiles.FirstOrDefault(f =>
+                        Path.GetFileName(f).Equals(selectedFileName, StringComparison.OrdinalIgnoreCase));
+
+                    if (string.IsNullOrEmpty(_currentLogFilePath))
+                    {
+                        MessageBox.Show("Файл не найден на сервере", "Ошибка",
+                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    await _logFileService.LoadLogFile(
+                        _currentLogFilePath,
+                        new ServerConfig { Protocol = "SSH" },
+                        _sshClient
+                    );
+                }
+                else
+                {
+                    // Для локальных файлов
+                    _currentLogFilePath = Path.Combine(_currentLogFolderPath, selectedFileName);
+                    await _logFileService.LoadLogFile(
+                        _currentLogFilePath,
+                        new ServerConfig { Protocol = "Local" }
+                    );
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки файла: {ex.Message}");
+                MessageBox.Show($"Ошибка загрузки файла: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -595,7 +642,23 @@ namespace GetStatistics
 
         private async void OpenFolder_Click(object sender, RoutedEventArgs e)
         {
-            
+            _currentLogFolderPath = null;
+            _currentLogFilePath = null;
+            if (_sshClient != null && _sshClient.IsConnected)
+            {
+                try
+                {
+                    _sshClient.Disconnect();
+                    _sshClient.Dispose();
+                    _sshClient = null;
+                    Console.WriteLine("SSH-соединение было закрыто.");
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Ошибка при отключении SSH: {ex.Message}");
+                }
+            }
             string selectedFolder;
 
             // Определяем, какая кнопка вызвала событие
@@ -639,7 +702,54 @@ namespace GetStatistics
 
         }
 
+        public async Task<List<string>> ConnectViaSsh(ServerConfig server)
+        {
+            try
+            {
+                // Закрываем предыдущее подключение
+                if (_sshClient != null)
+                {
+                    _sshClient.Disconnect();
+                    _sshClient.Dispose();
+                }
 
+                // Создаем новое подключение
+                _sshClient = new SshClient(server.Host, server.Username, server.Password);
+                await Task.Run(() => _sshClient.Connect());
+
+                if (_sshClient.IsConnected)
+                {
+                    var command = _sshClient.CreateCommand($"ls {server.Path} | grep -E '\\.log$|\\.txt$'");
+                    var result = await Task.Run(() => command.Execute());
+
+                    if (command.ExitStatus == 0)
+                    {
+                        return result.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                                   .Select(file => Path.Combine(server.Path, file))
+                                   .ToList();
+                    }
+                    throw new Exception($"Ошибка выполнения команды: {command.Error}");
+                }
+                throw new Exception("Не удалось подключиться к SSH");
+            }
+            catch (Exception ex)
+            {
+                _sshClient?.Dispose();
+                _sshClient = null;
+                StatusText.Text = $"Ошибка SSH: {ex.Message}";
+                throw; // Перебрасываем исключение для обработки в вызывающем коде
+            }
+        }
+
+        public void UpdateFileList(List<string> files)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _logFiles = files;
+                LogList.ItemsSource = files.Select(Path.GetFileName).ToList();
+                StatusText.Text = $"Найдено {files.Count} файлов";
+            });
+        }
 
 
         private void SearchTextBoxLog_Two_Left_KeyDown(object sender, KeyEventArgs e)
@@ -650,45 +760,110 @@ namespace GetStatistics
             }
         }
 
-        private void StartSearchInFilesButton_Left_Click(object sender, RoutedEventArgs e)
+        private async void StartSearchInFilesButton_Left_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(_currentLogFilePath))
+            if (string.IsNullOrEmpty(_currentLogFilePath))
+                return;
+
+            _isReadingLogs = false;
+
+            try
             {
-                _isReadingLogs = false;
+                string content;
 
-                try
+                if (_sshClient != null && _sshClient.IsConnected)
                 {
-                    string content;
-                    using (var fileStream = new FileStream(
-                        _currentLogFilePath,
-                        FileMode.Open,
-                        FileAccess.Read,
-                        FileShare.ReadWrite)) // Разрешаем другим процессам читать и писать
-                    {
-                        using (var reader = new StreamReader(fileStream))
-                        {
-                            content = reader.ReadToEnd();
-                        }
-                    }
+                    // Чтение файла через SSH (для Linux-сервера)
+                    content = await ReadFileViaSsh(_currentLogFilePath);
+                }
+                else
+                {
+                    // Чтение локального файла (старый код)
+                    Console.WriteLine(_currentLogFilePath);
+                    content = await ReadLocalFile(_currentLogFilePath);
+                }
 
-                    _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: true);
-                }
-                catch (IOException ex)
-                {
-                    MessageBox.Show($"Не удалось прочитать файл логов: {ex.Message}",
-                                   "Ошибка",
-                                   MessageBoxButton.OK,
-                                   MessageBoxImage.Error);
-                }
+                _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не удалось прочитать файл логов: {ex.Message}",
+                              "Ошибка",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Error);
             }
         }
 
-        private void StartSearchInFilesButton_Right_Click(object sender, RoutedEventArgs e)
+        // Метод для чтения файла через SSH
+        private async Task<string> ReadFileViaSsh(string filePath)
         {
-            if (!string.IsNullOrEmpty(_currentLogFilePath))
+            if (_sshClient == null || !_sshClient.IsConnected)
+                throw new InvalidOperationException("SSH-соединение не установлено.");
+
+            // Убедимся, что путь использует `/` для Linux
+            filePath = filePath.Replace('\\', '/');
+
+            // Выполняем команду `cat` для чтения файла
+            var command = _sshClient.CreateCommand($"cat '{filePath}'");
+            var result = await Task.Factory.FromAsync(command.BeginExecute(), command.EndExecute);
+
+            if (command.ExitStatus != 0)
             {
-                var content = File.ReadAllText(_currentLogFilePath);
+                throw new IOException($"Ошибка чтения файла: {result}");
+            }
+
+            return result;
+        }
+
+        // Метод для чтения локального файла (старая логика)
+        private async Task<string> ReadLocalFile(string filePath)
+        {
+            return await Task.Run(() =>
+            {
+                using (var fileStream = new FileStream(
+                    filePath,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.ReadWrite))
+                {
+                    using (var reader = new StreamReader(fileStream))
+                    {
+                        return reader.ReadToEnd();
+                    }
+                }
+            });
+        }
+
+        private async void StartSearchInFilesButton_Right_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_currentLogFilePath))
+                return;
+
+            _isReadingLogs = false;
+
+            try
+            {
+                string content;
+
+                if (_sshClient != null && _sshClient.IsConnected)
+                {
+                    // Чтение файла через SSH (для Linux-сервера)
+                    content = await ReadFileViaSsh(_currentLogFilePath);
+                }
+                else
+                {
+                    // Чтение локального файла (старый код)
+                    content = await ReadLocalFile(_currentLogFilePath);
+                }
+
                 _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: false);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не удалось прочитать файл логов: {ex.Message}",
+                              "Ошибка",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Error);
             }
         }
 
@@ -917,11 +1092,11 @@ namespace GetStatistics
 
         private void OpenSSHConnectionWindow_Click(object sender, RoutedEventArgs e)
         {
-            isLocal = false;
-            SSHConnectionWindow sshConnectionWindow = new SSHConnectionWindow();
-
-            // Показываем окно
-            sshConnectionWindow.Show();
+            var sshWindow = new SSHConnectionWindow
+            {
+                Owner = this // Важно установить владельца!
+            };
+            sshWindow.ShowDialog();
         }
     }
 }
