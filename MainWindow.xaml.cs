@@ -1197,13 +1197,7 @@ namespace GetStatistics
                         };
                         flowDoc.Blocks.Add(errorParagraph);
                     }
-                    finally
-                    {
-                        // Скрываем индикатор после завершения (успешного или с ошибкой)
-                        StatusProgressBar.Visibility = Visibility.Collapsed;
-                        StatusProgressBar.IsIndeterminate = false;
-                        StatusText.Text = "Готово";
-                    }
+                    
                 }
 
                 // Добавляем итоговую статистику
@@ -1232,6 +1226,12 @@ namespace GetStatistics
             {
                 Dispatcher.Invoke(() =>
                     StatusText.Text = $"Ошибка при поиске во всех файлах: {ex.Message}");
+            }
+            finally
+            {
+                // Скрываем индикатор после завершения (успешного или с ошибкой)
+                StatusProgressBar.Visibility = Visibility.Collapsed;
+                StatusProgressBar.IsIndeterminate = false;
             }
         }
     }
