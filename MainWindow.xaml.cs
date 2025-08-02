@@ -1237,9 +1237,9 @@ namespace GetStatistics
 
         private void Unical_CheckBox_Checked(object sender, RoutedEventArgs e)
         {
-                SearchTextBoxLog_One_Left.Background = Brushes.LightYellow;
+                SearchTextBoxLog_One_Left.Background = Brushes.LemonChiffon;
                 SearchTextBoxLog_One_Left.BorderThickness = new Thickness(2);
-                SearchTextBoxLog_Two_Left.Background = Brushes.LightYellow;
+                SearchTextBoxLog_Two_Left.Background = Brushes.LemonChiffon;
                 SearchTextBoxLog_Two_Left.BorderThickness = new Thickness(2);
                 SearchTextBoxLog_One_Right.Background = Brushes.LightBlue;
                 SearchTextBoxLog_One_Right.BorderThickness = new Thickness(2);
@@ -1256,6 +1256,24 @@ namespace GetStatistics
                 SearchTextBoxLog_One_Right.BorderThickness = new Thickness(1);
                 SearchTextBoxLog_Two_Right.Background = Brushes.White;
                 SearchTextBoxLog_Two_Right.BorderThickness = new Thickness(1);
+        }
+
+        private void CalculatorMode_CheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            LeftBorder.Background = Brushes.LemonChiffon;
+            LeftBorder.BorderThickness = new Thickness(2);
+            RightBorder.Background = Brushes.LightBlue;
+            RightBorder.BorderThickness = new Thickness(2);
+            CalculatorTab.IsSelected = true;
+        }
+
+        private void CalculatorMode_CheckBox_Unhecked(object sender, RoutedEventArgs e)
+        {
+            LeftBorder.Background = Brushes.White;
+            LeftBorder.BorderThickness = new Thickness(1);
+            RightBorder.Background = Brushes.White;
+            RightBorder.BorderThickness = new Thickness(1);
+            ResultsTab.IsSelected = true;
         }
     }
 }

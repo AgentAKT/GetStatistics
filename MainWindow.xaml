@@ -71,7 +71,7 @@
             </Border>
 
             <!-- Left Filter Panel -->
-            <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource SectionBorder}" Background="#FFF9F9F9">
+            <Border x:Name="LeftBorder" Grid.Row="0" Grid.Column="2" Style="{StaticResource SectionBorder}" Background="#FFF9F9F9">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -109,21 +109,25 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <CheckBox x:Name="Unical_CheckBox" Content="Уникальные" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center" Checked="Unical_CheckBox_Checked" Unchecked="Unical_CheckBox_Unchecked"/>
-                    <Button x:Name="StatisticIn24h_LeftButton" Grid.Column="1" Content="Статистика за 24 часа" 
+                    <CheckBox x:Name="Unical_CheckBox" Content="Уникальные" Grid.Column="0" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center" 
+                              Checked="Unical_CheckBox_Checked" Unchecked="Unical_CheckBox_Unchecked"/>
+                    <CheckBox x:Name="CalculatorMode_CheckBox" Grid.Column="1" Content="Режим калькулятора" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center" 
+                              Checked="CalculatorMode_CheckBox_Checked" Unchecked="CalculatorMode_CheckBox_Unhecked"/>
+                    <Button x:Name="StatisticIn24h_LeftButton" Grid.Column="2" Content="Статистика за 24 часа" 
                             MinWidth="120" HorizontalAlignment="Left" Click="ShowHourlyStatistics_Click" 
                             ToolTip="Показать статистику за 24 часа" Style="{StaticResource ModernButton}"/>
-                    <Button x:Name="CountAllRows" Grid.Column="2" Content="Искать во всех файлах" 
+                    <Button x:Name="CountAllRows" Grid.Column="3" Content="Искать во всех файлах" 
                             MinWidth="120" HorizontalAlignment="Left" Click="SearchInAllFilesButton_Click" 
                             ToolTip="Искать во всех файлах" Style="{StaticResource ModernButton}"/>
-                    <Label x:Name="StringCounter_Left" Grid.Column="3" Content="Найдено: " Style="{StaticResource ModernLabel}" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" HorizontalAlignment="Right"/>
-                    <Label x:Name="StringCounter_Main" Grid.Column="4" Content="Всего: " Style="{StaticResource ModernLabel}" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" HorizontalAlignment="Right"/>
+                    <Label x:Name="StringCounter_Left" Grid.Column="4" Content="Найдено: " Style="{StaticResource ModernLabel}" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" HorizontalAlignment="Right"/>
+                    <Label x:Name="StringCounter_Main" Grid.Column="5" Content="Всего: " Style="{StaticResource ModernLabel}" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" HorizontalAlignment="Right"/>
                 </Grid>
             </Border>
 
             <!-- Right Filter Panel -->
-            <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource SectionBorder}" Background="#FFF9F9F9">
+            <Border x:Name="RightBorder" Grid.Row="0" Grid.Column="3" Style="{StaticResource SectionBorder}" Background="#FFF9F9F9">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -182,7 +186,7 @@
 
                     <!-- Существующая вкладка с результатами -->
                     <TabControl Grid.Row="0" Grid.RowSpan="2">
-                        <TabItem Header="Результаты">
+                        <TabItem x:Name="ResultsTab" Header="Результаты">
                             <DataGrid x:Name="ResultsDataGrid" Grid.Row="1" Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding LogResults}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Фильтры" Binding="{Binding Filters}" Width="230"/>
@@ -214,7 +218,7 @@
                         </DataGrid.Columns>
                             </DataGrid>
                         </TabItem>
-                        <TabItem Header="Таймер">
+                        <TabItem x:Name="CalculatorTab" Header="Калькулятор">
                             <!-- Time Calculation Panel (Original StackPanel) -->
                                 <Grid>
                                     <Grid.RowDefinitions>
