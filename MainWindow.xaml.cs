@@ -1106,6 +1106,7 @@ namespace GetStatistics
 
         private async void SearchInAllFilesButton_Click(object sender, RoutedEventArgs e)
         {
+
             if (_logFiles == null || _logFiles.Count == 0)
             {
                 MessageBox.Show("Нет файлов для поиска");
@@ -1114,6 +1115,8 @@ namespace GetStatistics
 
             try
             {
+                StatusProgressBar.Visibility = Visibility.Visible;
+                StatusProgressBar.IsIndeterminate = true; // Бесконечная анимация
                 StatusText.Text = "Поиск во всех файлах...";
                 var results = new StringBuilder();
                 int totalFilesWithMatches = 0;
@@ -1193,6 +1196,13 @@ namespace GetStatistics
                             Foreground = Brushes.Red
                         };
                         flowDoc.Blocks.Add(errorParagraph);
+                    }
+                    finally
+                    {
+                        // Скрываем индикатор после завершения (успешного или с ошибкой)
+                        StatusProgressBar.Visibility = Visibility.Collapsed;
+                        StatusProgressBar.IsIndeterminate = false;
+                        StatusText.Text = "Готово";
                     }
                 }
 
