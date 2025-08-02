@@ -91,9 +91,9 @@
                     <ComboBox x:Name="StringComboBox_One_Left" Grid.Row="1" Style="{StaticResource ModernComboBox}" SelectionChanged="StringOneComboBox_SelectionChanged" ToolTip="Выберите первый критерий фильтрации"/>
                     <ComboBox x:Name="StringComboBox_Two_Left" Grid.Row="2" Style="{StaticResource ModernComboBox}" SelectionChanged="StringTwoComboBox_SelectionChanged" ToolTip="Выберите второй критерий фильтрации"/>
                     <TextBox x:Name="SearchTextBoxLog_One_Left" Grid.Row="3" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_One_Left_KeyDown" TextChanged="SearchTextBoxLog_One_Left_TextChanged" ToolTip="Введите текст для поиска"/>
-                    <TextBox x:Name="SearchTextBoxLog_Two_Left" Grid.Row="4" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_Two_Left_KeyDown" TextChanged="SearchTextBoxLog_Two_Left_TextChanged" ToolTip="Введите текст для поиска" Margin="0,4,0,0"/>
+                    <TextBox x:Name="SearchTextBoxLog_Two_Left" Grid.Row="4" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_Two_Left_KeyDown" TextChanged="SearchTextBoxLog_Two_Left_TextChanged" ToolTip="Введите текст для поиска" Margin="5,0,5,0"/>
 
-                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
                         <Button x:Name="SearchInFile_LeftButton" Content="Найти" Width="80" Click="StartSearchInFilesButton_Left_Click" ToolTip="Поиск по левому фильтру" Style="{StaticResource ModernButton}"/>
                         <Button x:Name="ClearButton_Left" Content="Очистить" Width="80" Click="ClearButton_Left_Click" ToolTip="Очистить левый фильтр" Style="{StaticResource ModernButton}"/>
                     </StackPanel>
@@ -110,7 +110,7 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <CheckBox x:Name="Unical_CheckBox" Content="Уникальные" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center"/>
+                    <CheckBox x:Name="Unical_CheckBox" Content="Уникальные" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center" Checked="Unical_CheckBox_Checked" Unchecked="Unical_CheckBox_Unchecked"/>
                     <Button x:Name="StatisticIn24h_LeftButton" Grid.Column="1" Content="Статистика за 24 часа" 
                             MinWidth="120" HorizontalAlignment="Left" Click="ShowHourlyStatistics_Click" 
                             ToolTip="Показать статистику за 24 часа" Style="{StaticResource ModernButton}"/>
@@ -143,9 +143,9 @@
                     <ComboBox x:Name="StringComboBox_One_Right" Grid.Row="1" Style="{StaticResource ModernComboBox}" SelectionChanged="StringOneComboBox_SelectionChanged" ToolTip="Выберите первый критерий фильтрации"/>
                     <ComboBox x:Name="StringComboBox_Two_Right" Grid.Row="2" Style="{StaticResource ModernComboBox}" SelectionChanged="StringTwoComboBox_SelectionChanged" ToolTip="Выберите второй критерий фильтрации"/>
                     <TextBox x:Name="SearchTextBoxLog_One_Right" Grid.Row="3" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_One_Right_KeyDown" TextChanged="SearchTextBoxLog_One_Right_TextChanged" ToolTip="Введите текст для поиска"/>
-                    <TextBox x:Name="SearchTextBoxLog_Two_Right" Grid.Row="4" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_Two_Right_KeyDown" TextChanged="SearchTextBoxLog_Two_Right_TextChanged" ToolTip="Введите текст для поиска" Margin="0,4,0,0"/>
+                    <TextBox x:Name="SearchTextBoxLog_Two_Right" Grid.Row="4" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_Two_Right_KeyDown" TextChanged="SearchTextBoxLog_Two_Right_TextChanged" ToolTip="Введите текст для поиска" Margin="5,0,5,0"/>
 
-                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
                         <Button x:Name="SearchInFile_RightButton" Content="Найти" Width="80" Click="StartSearchInFilesButton_Right_Click" ToolTip="Поиск по правому фильтру" Style="{StaticResource ModernButton}"/>
                         <Button x:Name="ClearButton_Right" Content="Очистить" Width="80" Click="ClearButton_Right_Click" ToolTip="Очистить правый фильтр" Style="{StaticResource ModernButton}"/>
                     </StackPanel>
@@ -177,9 +177,13 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Результаты" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
-                    <DataGrid x:Name="ResultsDataGrid" Grid.Row="1" Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding LogResults}">
+
+                    <!-- Существующая вкладка с результатами -->
+                    <TabControl Grid.Row="0" Grid.RowSpan="2">
+                        <TabItem Header="Результаты">
+                            <DataGrid x:Name="ResultsDataGrid" Grid.Row="1" Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding LogResults}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Фильтры" Binding="{Binding Filters}" Width="230"/>
                             <DataGridTextColumn Header="Всего" Binding="{Binding Counter}" Width="90"/>
@@ -208,7 +212,71 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
-                    </DataGrid>
+                            </DataGrid>
+                        </TabItem>
+                        <TabItem Header="Таймер">
+                            <!-- Time Calculation Panel (Original StackPanel) -->
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label x:Name="Time1" Grid.Column="0" Content="Время 1" Margin="5,5,5,5" Grid.ColumnSpan="2"/>
+                                        <Label x:Name="Time2" Grid.Column="2" Content="Время 2" Margin="5,5,5,5"/>
+                                    </Grid>
+
+
+                                    <Grid Grid.Row="1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="Time1TextBox" Grid.Column="0" Margin="5" 
+                                            IsReadOnly="True" TextChanged="Time1TextBox_TextChanged" Style="{StaticResource ModernTextBox}"/>
+                                        <TextBox x:Name="Time2TextBox" Grid.Column="1" Margin="5"
+                                            IsReadOnly="True" TextChanged="Time2TextBox_TextChanged" Style="{StaticResource ModernTextBox}"/>
+                                    </Grid>
+
+                                <DataGrid x:Name="ResultsDataGrid2" Grid.Row="2" Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding LogResults}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Строка лога" Binding="{Binding Filters}" Width="230"/>
+                                        <DataGridTextColumn Header="Время 1" Binding="{Binding Counter}" Width="90"/>
+                                        <DataGridTextColumn Header="Время 2" Binding="{Binding FullCounter}" Width="90"/>
+                                        <DataGridTemplateColumn Width="Auto">
+                                            <DataGridTemplateColumn.Header>
+                                                <Button Content="⎘ Копировать всё" 
+                    FontFamily="Segoe UI"
+                    ToolTip="Копировать всю таблицу"
+                    Click="CopyAllTableButton_Click"
+                    Padding="4,2"
+                    FontSize="12"
+                     Width="130"
+                    Style="{StaticResource ModernButton}"/>
+                                            </DataGridTemplateColumn.Header>
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="⎘ Копировать" 
+                        FontFamily="Segoe UI Symbol"
+                        ToolTip="Копировать строку"
+                        Click="CopyRowButton_Click"
+                        Padding="2"
+                        FontSize="12"
+                        Style="{StaticResource ModernButton}"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
                 </Grid>
             </Border>
 

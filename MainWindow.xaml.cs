@@ -1234,5 +1234,28 @@ namespace GetStatistics
                 StatusProgressBar.IsIndeterminate = false;
             }
         }
+
+        private void Unical_CheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+                SearchTextBoxLog_One_Left.Background = Brushes.LightYellow;
+                SearchTextBoxLog_One_Left.BorderThickness = new Thickness(2);
+                SearchTextBoxLog_Two_Left.Background = Brushes.LightYellow;
+                SearchTextBoxLog_Two_Left.BorderThickness = new Thickness(2);
+                SearchTextBoxLog_One_Right.Background = Brushes.LightBlue;
+                SearchTextBoxLog_One_Right.BorderThickness = new Thickness(2);
+                SearchTextBoxLog_Two_Right.Background = Brushes.LightBlue;
+                SearchTextBoxLog_Two_Right.BorderThickness = new Thickness(2);
+        }
+        private void Unical_CheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+                SearchTextBoxLog_One_Left.Background = Brushes.White;
+                SearchTextBoxLog_One_Left.BorderThickness = new Thickness(1);
+                SearchTextBoxLog_Two_Left.Background = Brushes.White;
+                SearchTextBoxLog_Two_Left.BorderThickness = new Thickness(1);
+                SearchTextBoxLog_One_Right.Background = Brushes.White;
+                SearchTextBoxLog_One_Right.BorderThickness = new Thickness(1);
+                SearchTextBoxLog_Two_Right.Background = Brushes.White;
+                SearchTextBoxLog_Two_Right.BorderThickness = new Thickness(1);
+        }
     }
 }
