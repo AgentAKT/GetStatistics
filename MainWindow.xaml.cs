@@ -16,6 +16,7 @@ using System.Windows.Controls.Primitives;
 using GetStatistics.Models;
 using static FilterLogFile;
 using System.Windows.Media;
+using System.Text;
 
 
 namespace GetStatistics
@@ -762,6 +763,8 @@ namespace GetStatistics
 
         private async void StartSearchInFilesButton_Left_Click(object sender, RoutedEventArgs e)
         {
+            StringCounter_Left.Content = "";
+            StringCounter_Main.Content = "";
             if (string.IsNullOrEmpty(_currentLogFilePath))
                 return;
 
@@ -836,6 +839,8 @@ namespace GetStatistics
 
         private async void StartSearchInFilesButton_Right_Click(object sender, RoutedEventArgs e)
         {
+            StringCounter_Left.Content = "";
+            StringCounter_Main.Content = "";
             if (string.IsNullOrEmpty(_currentLogFilePath))
                 return;
 
@@ -1097,6 +1102,127 @@ namespace GetStatistics
                 Owner = this // Важно установить владельца!
             };
             sshWindow.ShowDialog();
+        }
+
+        private async void SearchInAllFilesButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_logFiles == null || _logFiles.Count == 0)
+            {
+                MessageBox.Show("Нет файлов для поиска");
+                return;
+            }
+
+            try
+            {
+                StatusText.Text = "Поиск во всех файлах...";
+                var results = new StringBuilder();
+                int totalFilesWithMatches = 0;
+                int totalMatches = 0;
+
+                // Получаем параметры левого фильтра
+                var leftFilterParams = new FilterParameters
+                {
+                    Filter_One = StringComboBox_One_Left.SelectedItem?.ToString(),
+                    Filter_Two = StringComboBox_Two_Left.SelectedItem?.ToString(),
+                    SearchText_One = SearchTextBoxLog_One_Left.Text,
+                    SearchText_Two = SearchTextBoxLog_Two_Left.Text
+                };
+
+                // Очищаем RichTextBox перед выводом результатов
+                Dispatcher.Invoke(() => LogRichTextBox.Document.Blocks.Clear());
+
+                // Создаем FlowDocument для форматированного вывода
+                FlowDocument flowDoc = new FlowDocument();
+                Paragraph headerParagraph = new Paragraph(new Run("Результаты поиска во всех файлах:"))
+                {
+                    FontWeight = FontWeights.Bold,
+                    FontSize = 14,
+                    Foreground = Brushes.DarkBlue
+                };
+                flowDoc.Blocks.Add(headerParagraph);
+
+                // Проходим по всем файлам
+                foreach (var filePath in _logFiles)
+                {
+                    try
+                    {
+                        string content;
+
+                        // Читаем файл в зависимости от типа подключения
+                        if (_sshClient != null && _sshClient.IsConnected)
+                        {
+                            content = await ReadFileViaSsh(filePath);
+                        }
+                        else
+                        {
+                            content = await ReadLocalFile(filePath);
+                        }
+
+                        // Разбиваем содержимое на строки
+                        var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        int fileMatchCount = 0;
+
+                        // Проверяем каждую строку на соответствие левому фильтру
+                        foreach (var line in lines)
+                        {
+                            if (_logFileService.MatchesFilter(line, leftFilterParams))
+                            {
+                                fileMatchCount++;
+                            }
+                        }
+
+                        if (fileMatchCount > 0)
+                        {
+                            string fileName = Path.GetFileName(filePath);
+                            Paragraph resultParagraph = new Paragraph();
+                            resultParagraph.Inlines.Add(new Run($"{fileName}: ")
+                            {
+                                FontWeight = FontWeights.Bold
+                            });
+                            resultParagraph.Inlines.Add(new Run($"{fileMatchCount} совпадений"));
+
+                            flowDoc.Blocks.Add(resultParagraph);
+                            totalFilesWithMatches++;
+                            totalMatches += fileMatchCount;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Paragraph errorParagraph = new Paragraph(new Run($"Ошибка обработки файла {Path.GetFileName(filePath)}: {ex.Message}"))
+                        {
+                            Foreground = Brushes.Red
+                        };
+                        flowDoc.Blocks.Add(errorParagraph);
+                    }
+                }
+
+                // Добавляем итоговую статистику
+                Paragraph summaryParagraph = new Paragraph();
+                summaryParagraph.Inlines.Add(new Run("\nИтоговая статистика:\n")
+                {
+                    FontWeight = FontWeights.Bold
+                });
+                summaryParagraph.Inlines.Add(new Run($"Файлов с совпадениями: {totalFilesWithMatches}\n"));
+                summaryParagraph.Inlines.Add(new Run($"Всего совпадений: {totalMatches}")
+                {
+                    FontWeight = FontWeights.Bold
+                });
+                flowDoc.Blocks.Add(summaryParagraph);
+
+                // Выводим результаты в RichTextBox
+                Dispatcher.Invoke(() =>
+                {
+                    LogRichTextBox.Document = flowDoc;
+                    StatusText.Text = $"Поиск завершен. Найдено {totalMatches} совпадений в {totalFilesWithMatches} файлах";
+                    StringCounter_Left.Content = $"Найдено: {totalMatches} ";
+                    StringCounter_Main.Content = $"Файлов: {totalFilesWithMatches}";
+                });
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() =>
+                    StatusText.Text = $"Ошибка при поиске во всех файлах: {ex.Message}");
+            }
         }
     }
 }

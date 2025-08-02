@@ -108,11 +108,17 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <CheckBox x:Name="Unical_CheckBox" Content="Уникальные" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center"/>
-                    <Button x:Name="StatisticIn24h_LeftButton" Grid.Column="1" Content="Статистика за 24 часа" MinWidth="120" HorizontalAlignment="Left" Click="ShowHourlyStatistics_Click" ToolTip="Показать статистику за 24 часа" Style="{StaticResource ModernButton}"/>
-                    <Label x:Name="StringCounter_Left" Grid.Column="2" Content="Найдено: " Style="{StaticResource ModernLabel}" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" HorizontalAlignment="Right"/>
-                    <Label x:Name="StringCounter_Main" Grid.Column="3" Content="Всего: " Style="{StaticResource ModernLabel}" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" HorizontalAlignment="Right"/>
+                    <Button x:Name="StatisticIn24h_LeftButton" Grid.Column="1" Content="Статистика за 24 часа" 
+                            MinWidth="120" HorizontalAlignment="Left" Click="ShowHourlyStatistics_Click" 
+                            ToolTip="Показать статистику за 24 часа" Style="{StaticResource ModernButton}"/>
+                    <Button x:Name="CountAllRows" Grid.Column="2" Content="Искать во всех файлах" 
+                            MinWidth="120" HorizontalAlignment="Left" Click="SearchInAllFilesButton_Click" 
+                            ToolTip="Искать во всех файлах" Style="{StaticResource ModernButton}"/>
+                    <Label x:Name="StringCounter_Left" Grid.Column="3" Content="Найдено: " Style="{StaticResource ModernLabel}" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" HorizontalAlignment="Right"/>
+                    <Label x:Name="StringCounter_Main" Grid.Column="4" Content="Всего: " Style="{StaticResource ModernLabel}" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" HorizontalAlignment="Right"/>
                 </Grid>
             </Border>
 

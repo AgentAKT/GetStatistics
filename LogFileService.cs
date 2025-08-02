@@ -2,6 +2,7 @@
 using GetStatistics.Models;
 using Renci.SshNet;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -143,4 +144,38 @@ public class LogFileService
         filterLogFile.ApplyLogFilters(filters, isLeftFilter);
     }
 
+    public bool MatchesFilter(string line, FilterParameters filterParams)
+    {
+        if (string.IsNullOrEmpty(line))
+            return false;
+
+        // Проверяем соответствие всем заданным фильтрам (которые не пустые)
+        bool matches = true;
+
+        // Проверка первого условия фильтра (если задано)
+        if (!string.IsNullOrEmpty(filterParams.SearchText_One))
+        {
+            matches = line.Contains(filterParams.SearchText_One);
+        }
+
+        // Проверка второго условия фильтра (если задано)
+        if (matches && !string.IsNullOrEmpty(filterParams.SearchText_Two))
+        {
+            matches = line.Contains(filterParams.SearchText_Two);
+        }
+
+        // Проверка первого комбобокса (если задан)
+        if (matches && !string.IsNullOrEmpty(filterParams.Filter_One))
+        {
+            matches = line.Contains(filterParams.Filter_One);
+        }
+
+        // Проверка второго комбобокса (если задан)
+        if (matches && !string.IsNullOrEmpty(filterParams.Filter_Two))
+        {
+            matches = line.Contains(filterParams.Filter_Two);
+        }
+
+        return matches;
+    }
 }
