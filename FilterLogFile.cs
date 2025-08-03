@@ -171,8 +171,8 @@ public class FilterLogFile
             }
             if (_mainWindow.Unical_CheckBox.IsChecked == true)
             {
-                _logRichTextBox.Document.Blocks.Clear();
             }
+            _logRichTextBox.Document.Blocks.Clear();
             _logRichTextBox.Document.Blocks.Add(paragraph);
         });
     }

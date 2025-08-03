@@ -852,7 +852,7 @@ namespace GetStatistics
 
         private async void StartSearchInFilesButton_Left_Click(object sender, RoutedEventArgs e)
         {
-            StringCounter_Left.Content = "";
+             StringCounter_Left.Content = "";
             StringCounter_Main.Content = "";
             if (string.IsNullOrEmpty(_currentLogFilePath))
                 return;
