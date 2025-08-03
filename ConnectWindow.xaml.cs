@@ -387,12 +387,12 @@ namespace GetStatistics
             if ((DateTime.Now - _lastTreeViewClickTime).TotalMilliseconds < 300 &&
                 ServersTreeView.SelectedItem == _lastClickedItem)
             {
-                // Ваш код для двойного клика
+                // Код для двойного клика
                 var selectedItem = ServersTreeView.SelectedItem;
-                //MessageBox.Show($"Двойной клик на элементе: {selectedItem} Добавить в комбобокс");
+                MessageBox.Show($"Двойной клик на элементе: {selectedItem} Добавить в комбобокс");
 
-                // Или можно вызвать метод обработки:
-                // ProcessTreeViewDoubleClick(selectedItem);
+                // Можно вызвать метод обработки:
+                //ProcessTreeViewDoubleClick(selectedItem);
             }
         }
         // 1. Обработчик PreviewMouseLeftButtonDown

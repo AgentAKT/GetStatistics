@@ -169,8 +169,10 @@ public class FilterLogFile
                     paragraph.Inlines.Add(span);
                 }
             }
-
-            _logRichTextBox.Document.Blocks.Clear();
+            if (_mainWindow.Unical_CheckBox.IsChecked == true)
+            {
+                _logRichTextBox.Document.Blocks.Clear();
+            }
             _logRichTextBox.Document.Blocks.Add(paragraph);
         });
     }

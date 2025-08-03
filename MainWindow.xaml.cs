@@ -154,6 +154,8 @@ namespace GetStatistics
                     StatusText.Text = $"Ошибка обновления списка: {ex.Message}");
             }
         }
+
+
         // Фильтр файлов по условию
         public async void ApplyFilters()
         {
@@ -471,6 +473,9 @@ namespace GetStatistics
         string lineText1 = "";
         string lineText2 = "";
 
+        private ObservableCollection<LogCalcResult> _logCalcResults = new ObservableCollection<LogCalcResult>();
+        string lineCalcText1 = "";
+        string lineCalcText2 = "";
         private string GetSelectedLineText()
         {
             var textPointer = LogRichTextBox.GetPositionFromPoint(
@@ -512,22 +517,27 @@ namespace GetStatistics
 
         private void LogRichTextBox_MouseMove(object sender, MouseEventArgs e)
         {
+            if (CalculatorMode_CheckBox.IsChecked == true) 
+            { 
+            var clickPosition = e.GetPosition(LogRichTextBox);
+            var textPointer = LogRichTextBox.GetPositionFromPoint(clickPosition, true);
 
-            //var clickPosition = e.GetPosition(LogRichTextBox);
-            //var textPointer = LogRichTextBox.GetPositionFromPoint(clickPosition, true);
+            if (textPointer == null)
+                return;
 
-            //if (textPointer == null)
-            //    return;
+            // Получаем начало строки
+            var lineStart = GetLineStart(textPointer);
+            var lineEnd = GetLineEnd(textPointer);
 
-            //// Получаем начало строки
-            //var lineStart = GetLineStart(textPointer);
-            //var lineEnd = GetLineEnd(textPointer);
-
-            //if (lineStart == null || lineEnd == null)
-            //    return;
-            //LogRichTextBox.Selection.Select(lineStart, lineEnd);
+            if (lineStart == null || lineEnd == null)
+                return;
+            LogRichTextBox.Selection.Select(lineStart, lineEnd);
+            
+            }
 
         }
+
+
 
         private void CopyAllTableButton_Click(object sender, RoutedEventArgs e)
         {
@@ -563,6 +573,77 @@ namespace GetStatistics
             //{
             //    MessageBox.Show($"Ошибка при копировании: {ex.Message}");
             //}
+        }
+
+        private void LogRichTextBox_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if(CalculatorMode_CheckBox.IsChecked == true)
+            {
+
+                // Получаем текст выделенной строки
+                var lineText = GetSelectedLineText();
+                Console.WriteLine(lineText);
+                if (string.IsNullOrEmpty(lineText)) return;
+
+                // Извлекаем timestamp из строки
+                string timestamp = ExtractTimestamp(lineText);
+                Console.WriteLine(timestamp);
+                if (string.IsNullOrEmpty(timestamp)) return;
+
+                // Определяем, какой TextBox заполнять (Time1 или Time2)
+                if (Time1TextBox.Text == "")
+                {
+                    Time1TextBox.Text = timestamp;
+                    lineText1 = lineText;
+                }
+                else if (Time2TextBox.Text == "")
+                {
+                    Time2TextBox.Text = timestamp;
+                    lineText2 = lineText;
+                    CalculateAndShowResult(lineText1, lineText2);
+                    Time1TextBox.Text = "";
+                    Time2TextBox.Text = "";
+                }
+            }
+        }
+
+        private void CalculateAndShowResult(string lineText1, string lineText2)
+        {
+            try
+            {
+                // 1. Парсим таймштампы
+                if (!DateTime.TryParse(Time1TextBox.Text, out DateTime time1) ||
+                    !DateTime.TryParse(Time2TextBox.Text, out DateTime time2))
+                {
+                    MessageBox.Show("Невозможно распознать временные метки!");
+                    return;
+                }
+
+                // 2. Вычисляем разницу
+                TimeSpan difference = time2 - time1; // time2 - time1 (а не наоборот)
+                string result = $"Разница: {difference.TotalSeconds:0.000} сек";
+
+                // 3. Добавляем результат в коллекцию
+                _logCalcResults.Add(new LogCalcResult
+                {
+                    LineText1 = lineText1.Trim(),
+                    LineText2 = lineText2.Trim(),
+                    Result = result
+                });
+
+                // 4. Обновляем DataGrid
+                ResultsDataGridCalc.ItemsSource = null;
+                ResultsDataGridCalc.ItemsSource = _logCalcResults;
+                ResultsDataGridCalc.ScrollIntoView(_logCalcResults.Last());
+
+                // 5. Очищаем поля ПОСЛЕ вычислений
+                Time1TextBox.Text = "";
+                Time2TextBox.Text = "";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}");
+            }
         }
 
         // Копирование по кнопке
@@ -608,6 +689,14 @@ namespace GetStatistics
             public string Counter { get; set; } // Лог строка 2
             public string FullCounter { get; set; } // Числовой результат
             public string GetCopyText() => $"{Filters}\n{Counter}\n{FullCounter}";
+        }
+
+        public class LogCalcResult
+        {
+            public string LineText1 { get; set; }  // Лог строка 1
+            public string LineText2 { get; set; } // Лог строка 2
+            public string Result { get; set; } // Числовой результат
+            public string GetCopyText() => $"{LineText1}\n{LineText2}\n{Result}";
         }
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)

@@ -94,8 +94,8 @@
                     <TextBox x:Name="SearchTextBoxLog_Two_Left" Grid.Row="4" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_Two_Left_KeyDown" TextChanged="SearchTextBoxLog_Two_Left_TextChanged" ToolTip="Введите текст для поиска" Margin="5,0,5,0"/>
 
                     <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
-                        <Button x:Name="SearchInFile_LeftButton" Content="Найти" Width="80" Click="StartSearchInFilesButton_Left_Click" ToolTip="Поиск по левому фильтру" Style="{StaticResource ModernButton}"/>
-                        <Button x:Name="ClearButton_Left" Content="Очистить" Width="80" Click="ClearButton_Left_Click" ToolTip="Очистить левый фильтр" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="SearchInFile_LeftButton" Margin="1,1,5,1" Content="Найти" Width="80" Click="StartSearchInFilesButton_Left_Click" ToolTip="Поиск по левому фильтру" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="ClearButton_Left" Margin="1,1,5,1" Content="Очистить" Width="80" Click="ClearButton_Left_Click" ToolTip="Очистить левый фильтр" Style="{StaticResource ModernButton}"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -105,11 +105,11 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <CheckBox x:Name="Unical_CheckBox" Content="Уникальные" Grid.Column="0" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center" 
                               Checked="Unical_CheckBox_Checked" Unchecked="Unical_CheckBox_Unchecked"/>
@@ -150,8 +150,8 @@
                     <TextBox x:Name="SearchTextBoxLog_Two_Right" Grid.Row="4" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_Two_Right_KeyDown" TextChanged="SearchTextBoxLog_Two_Right_TextChanged" ToolTip="Введите текст для поиска" Margin="5,0,5,0"/>
 
                     <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
-                        <Button x:Name="SearchInFile_RightButton" Content="Найти" Width="80" Click="StartSearchInFilesButton_Right_Click" ToolTip="Поиск по правому фильтру" Style="{StaticResource ModernButton}"/>
-                        <Button x:Name="ClearButton_Right" Content="Очистить" Width="80" Click="ClearButton_Right_Click" ToolTip="Очистить правый фильтр" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="SearchInFile_RightButton" Content="Найти" Margin="1,1,5,1" Width="80" Click="StartSearchInFilesButton_Right_Click" ToolTip="Поиск по правому фильтру" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="ClearButton_Right" Content="Очистить" Margin="1,1,5,1" Width="80" Click="ClearButton_Right_Click" ToolTip="Очистить правый фильтр" Style="{StaticResource ModernButton}"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -161,7 +161,8 @@
                 <RichTextBox x:Name="LogRichTextBox" Style="{StaticResource ModernRichTextBox}" 
                             IsDocumentEnabled="True" 
                             TextChanged="LogRichTextBox_TextChanged" 
-                            MouseMove="LogRichTextBox_MouseMove">
+                            MouseMove="LogRichTextBox_MouseMove"
+                            MouseDoubleClick="LogRichTextBox_PreviewMouseDoubleClick">
                     <RichTextBox.Resources>
                         <Style TargetType="Paragraph">
                             <Setter Property="Margin" Value="0,2,0,2"/>
@@ -248,30 +249,30 @@
                                             IsReadOnly="True" TextChanged="Time2TextBox_TextChanged" Style="{StaticResource ModernTextBox}"/>
                                     </Grid>
 
-                                <DataGrid x:Name="ResultsDataGrid2" Grid.Row="2" Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding LogResults}">
+                                <DataGrid x:Name="ResultsDataGridCalc" Grid.Row="2" Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding LogResults}">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Строка лога" Binding="{Binding Filters}" Width="230"/>
-                                        <DataGridTextColumn Header="Время 1" Binding="{Binding Counter}" Width="90"/>
-                                        <DataGridTextColumn Header="Время 2" Binding="{Binding FullCounter}" Width="90"/>
+                                        <DataGridTextColumn Header="Строка 1" Binding="{Binding LineText1}" Width="200"/>
+                                        <DataGridTextColumn Header="Строка 2" Binding="{Binding LineText2}" Width="200"/>
+                                        <DataGridTextColumn Header="Время" Binding="{Binding Result}" Width="60"/>
                                         <DataGridTemplateColumn Width="Auto">
                                             <DataGridTemplateColumn.Header>
-                                                <Button Content="⎘ Копировать всё" 
+                                                <Button Content="⎘" 
                     FontFamily="Segoe UI"
                     ToolTip="Копировать всю таблицу"
                     Click="CopyAllTableButton_Click"
                     Padding="4,2"
-                    FontSize="12"
-                     Width="130"
+                    FontSize="16"
+                     Width="40"
                     Style="{StaticResource ModernButton}"/>
                                             </DataGridTemplateColumn.Header>
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Button Content="⎘ Копировать" 
+                                                    <Button Content="⎘" 
                         FontFamily="Segoe UI Symbol"
                         ToolTip="Копировать строку"
                         Click="CopyRowButton_Click"
                         Padding="2"
-                        FontSize="12"
+                        FontSize="16"
                         Style="{StaticResource ModernButton}"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
