@@ -17,6 +17,7 @@ using GetStatistics.Models;
 using static FilterLogFile;
 using System.Windows.Media;
 using System.Text;
+using LogNavigator;
 
 
 namespace GetStatistics
@@ -43,6 +44,7 @@ namespace GetStatistics
         private string _currentLogDirectory; // Путь к папке с логами
         private string _currentLogFile;     // Только имя файла
         public string _currentLogFolderPath; // Хранит только путь к папке
+        private WorkWithCounters _counterHelper;
 
         public MainWindow()
         {
@@ -80,6 +82,7 @@ namespace GetStatistics
 
             _quoteManager = new QuoteManager("quotes.txt");
             Loaded += OnMainWindowLoaded;
+            _counterHelper = new WorkWithCounters(this);
 
             StatusText.Text = $"  Team78 (UAT)";
         }
@@ -852,8 +855,8 @@ namespace GetStatistics
 
         private async void StartSearchInFilesButton_Left_Click(object sender, RoutedEventArgs e)
         {
-             StringCounter_Left.Content = "";
-            StringCounter_Main.Content = "";
+            _counterHelper.ClearLeftCounter();
+            _counterHelper.ClearMainCounter();
             if (string.IsNullOrEmpty(_currentLogFilePath))
                 return;
 
@@ -928,8 +931,8 @@ namespace GetStatistics
 
         private async void StartSearchInFilesButton_Right_Click(object sender, RoutedEventArgs e)
         {
-            StringCounter_Left.Content = "";
-            StringCounter_Main.Content = "";
+            _counterHelper.ClearLeftCounter();
+            _counterHelper.ClearMainCounter();
             if (string.IsNullOrEmpty(_currentLogFilePath))
                 return;
 
