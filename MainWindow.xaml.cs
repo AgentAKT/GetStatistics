@@ -84,6 +84,7 @@ namespace GetStatistics
             _counterHelper = new WorkWithCounters(this);
             _getLogFiles = new GetLogFiles();
             Loaded += OnMainWindowLoaded;
+            this.DataContext = this;
 
             StatusText.Text = $"  Team78 (UAT)";
         }
@@ -94,6 +95,16 @@ namespace GetStatistics
         }
 
         public ObservableCollection<LogResult> LogResults { get; } = new ObservableCollection<LogResult>();
+        public ObservableCollection<CalculationResultItem> CalcResults { get; }
+        = new ObservableCollection<CalculationResultItem>();
+
+        public class CalculationResultItem
+        {
+            public string LineText1 { get; set; }
+            public string LineText2 { get; set; }
+            public string Result { get; set; }
+            public TimeSpan TimeDifference { get; set; }
+        }
 
         public void UpdateLogList(List<string> filePaths)
         {
@@ -443,37 +454,6 @@ namespace GetStatistics
         private void CopyAllTableButton_Click(object sender, RoutedEventArgs e)
         {
             _filterLogFile.CopyResultsToClipboard();
-
-            //try
-            //{
-            //    if (_logResults == null || _logResults.Count == 0)
-            //    {
-            //        MessageBox.Show("Нет данных для копирования");
-            //        return;
-            //    }
-
-            //    // Создаем строку с заголовками колонок
-            //    var headers = string.Join("\t", ResultsDataGrid.Columns
-            //        .Where(c => c.Header != null && c.Header.ToString() != "⎘")
-            //        .Select(c => c.Header.ToString()));
-
-            //    // Собираем все данные
-            //    var dataLines = _logResults.Select(row =>
-            //        $"{row.LineText1}\n{row.LineText2}\n{row.Result}\n");
-
-            //    // Объединяем в один текст
-            //    var allText = string.Join(Environment.NewLine, dataLines);
-
-            //    // Копируем в буфер обмена
-            //    Clipboard.SetText(allText);
-
-            //    // Показываем уведомление
-            //    ShowCopyNotification("Все данные скопированы!");
-            //}
-            //catch (Exception ex)
-            //{
-            //    MessageBox.Show($"Ошибка при копировании: {ex.Message}");
-            //}
         }
 
         private void LogRichTextBox_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -550,11 +530,23 @@ namespace GetStatistics
         // Копирование по кнопке
         private void CopyRowButton_Click(object sender, RoutedEventArgs e)
         {
-            var selectedItem = ResultsDataGrid.SelectedItem as FilterResultItem;
-            if (selectedItem != null)
+            if (ResultsTab.IsSelected)
             {
-                _filterLogFile.CopySingleRowToClipboard(selectedItem);
-                ShowCopyNotification();
+                var selectedItem = ResultsDataGrid.SelectedItem as LogResult; // Изменили тип здесь
+                if (selectedItem != null)
+                {
+                    _filterLogFile.CopySingleRowToClipboard(selectedItem);
+                    ShowCopyNotification();
+                }
+            }
+            else if (CalculatorTab.IsSelected)
+            {
+                var selectedItem = ResultsDataGridCalc.SelectedItem as LogCalcResult; // Изменили тип здесь
+                if (selectedItem != null)
+                {
+                    _filterLogFile.CopySingleCalcRowToClipboard(selectedItem);
+                    ShowCopyNotification();
+                }
             }
         }
 
@@ -594,9 +586,9 @@ namespace GetStatistics
 
         public class LogCalcResult
         {
-            public string LineText1 { get; set; }  // Лог строка 1
-            public string LineText2 { get; set; } // Лог строка 2
-            public string Result { get; set; } // Числовой результат
+            public string LineText1 { get; set; }
+            public string LineText2 { get; set; }
+            public string Result { get; set; }
             public string GetCopyText() => $"{LineText1}\n{LineText2}\n{Result}";
         }
 
@@ -1264,6 +1256,11 @@ namespace GetStatistics
             RightBorder.Background = Brushes.White;
             RightBorder.BorderThickness = new Thickness(1);
             ResultsTab.IsSelected = true;
+        }
+
+        private void ClearResultsButton_Click(object sender, RoutedEventArgs e)
+        {
+            _filterLogFile.ClearResultsButton_Click();
         }
     }
 }

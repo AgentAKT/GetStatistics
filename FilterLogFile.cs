@@ -9,6 +9,10 @@ using System.Windows.Media;
 using System.Collections.Generic;
 using System.Windows;
 using System.Linq;
+using System.Collections;
+using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
+using static GetStatistics.MainWindow;
+using System.Windows.Data;
 
 public class FilterLogFile
 {
@@ -267,6 +271,13 @@ public class FilterLogFile
         public int FullCounter { get; set; }
     }
 
+    public class FilterResultItemCalc
+    {
+        public string LineText1 { get; set; }
+        public string LineText2 { get; set; }
+        public string Result { get; set; }
+    }
+
     public void AddToResultsDataGrid(FilterParameters filters, int counter, int fullCounter)
     {
         if (_mainWindow.ResultsDataGrid == null || !_mainWindow.ResultsDataGrid.CheckAccess())
@@ -294,11 +305,36 @@ public class FilterLogFile
             }
         });
     }
-
-    public void CopySingleRowToClipboard(FilterResultItem item)
+    public void CopySingleCalcRowToClipboard(LogCalcResult item)
     {
         if (item == null)
             return;
+
+        if (!_mainWindow.CheckAccess())
+        {
+            _mainWindow.Dispatcher.Invoke(() => CopySingleCalcRowToClipboard(item));
+            return;
+        }
+
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Строка 1: {item.LineText1 ?? "н/д"}");
+            sb.AppendLine($"Строка 2: {item.LineText2 ?? "н/д"}");
+            sb.AppendLine($"Результат: {item.Result ?? "н/д"}");
+
+            Clipboard.SetText(sb.ToString());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Ошибка при копировании строки калькулятора: {ex.Message}");
+            _mainWindow.StatusText.Text = "Ошибка копирования";
+        }
+    }
+
+    public void CopySingleRowToClipboard(LogResult item)
+    {
+        if (item == null) return;
 
         if (!_mainWindow.CheckAccess())
         {
@@ -310,49 +346,131 @@ public class FilterLogFile
         {
             var sb = new StringBuilder();
             sb.AppendLine($"Фильтры: {item.Filters}");
-            sb.AppendLine($"Счетчик 1: {item.Counter}");
-            sb.AppendLine($"Счетчик 2: {item.FullCounter}");
+            sb.AppendLine($"Счетчик: {item.Counter}");
+            sb.AppendLine($"Всего: {item.FullCounter}");
 
             Clipboard.SetText(sb.ToString().TrimEnd());
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Ошибка при копировании строки: {ex.Message}");
-            // MessageBox.Show("Не удалось скопировать строку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     public void CopyResultsToClipboard()
     {
-        if (_mainWindow.ResultsDataGrid == null || !_mainWindow.ResultsDataGrid.CheckAccess())
+        if (_mainWindow.ResultsTab.IsSelected)
+        {
+            CopyResultsToClipboard(_mainWindow.ResultsDataGrid);
+        }
+        else if (_mainWindow.CalculatorTab.IsSelected)
+        {
+            CopyCalcResultsToClipboard(_mainWindow.ResultsDataGridCalc);
+        }
+    }
+
+    public void CopyCalcResultsToClipboard(DataGrid dataGrid)
+    {
+        if (dataGrid == null || !dataGrid.CheckAccess())
             return;
 
-        _mainWindow.ResultsDataGrid.Dispatcher.Invoke(() =>
+        dataGrid.Dispatcher.Invoke(() =>
         {
-            if (_mainWindow.ResultsDataGrid.ItemsSource is IEnumerable<FilterResultItem> items && items.Any())
+            if (dataGrid.ItemsSource == null || !dataGrid.ItemsSource.OfType<object>().Any())
             {
-                var sb = new StringBuilder();
+                System.Diagnostics.Debug.WriteLine("Нет данных для копирования в ResultsDataGridCalc");
+                _mainWindow.StatusText.Text = "Нет данных для копирования";
+                return;
+            }
 
-                foreach (var item in items)
-                {
-                    sb.AppendLine($"Фильтры: {item.Filters}");
-                    sb.AppendLine($"Счетчик 1: {item.Counter}");
-                    sb.AppendLine($"Счетчик 2: {item.FullCounter}");
-                    sb.AppendLine(); // Пустая строка между записями
-                }
+            var sb = new StringBuilder();
 
-                try
-                {
-                    Clipboard.SetText(sb.ToString().TrimEnd()); // Удаляем последний перенос строки
-                }
-                catch (Exception ex)
-                {
-                    // Обработка ошибок доступа к буферу обмена
-                    System.Diagnostics.Debug.WriteLine($"Ошибка при копировании в буфер обмена: {ex.Message}");
-                    // Можно добавить MessageBox.Show() для уведомления пользователя
-                }
+            foreach (var item in dataGrid.ItemsSource)
+            {
+                // Получаем значения из колонок
+                string line1 = GetCellValue(item, "LineText1");
+                string line2 = GetCellValue(item, "LineText2");
+                string result = GetCellValue(item, "Result");
+
+                // Формируем вывод в нужном формате
+                sb.AppendLine($"Строка 1: \n {line1}");
+                sb.AppendLine($"Строка 2: \n {line2}");
+                sb.AppendLine($"Результат: {result}");
+                sb.AppendLine(); // Пустая строка между записями
+            }
+
+            try
+            {
+                Clipboard.SetText(sb.ToString().TrimEnd()); // Удаляем последний перенос строки
+                System.Diagnostics.Debug.WriteLine("Данные скопированы в буфер обмена");
+                _mainWindow.StatusText.Text = "Данные скопированы";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка копирования: {ex.Message}");
+                _mainWindow.StatusText.Text = "Ошибка копирования";
             }
         });
+    }
+
+    // Вспомогательный метод для получения значения ячейки
+    private string GetCellValue(object item, string propertyName)
+    {
+        if (item == null) return string.Empty;
+
+        var prop = item.GetType().GetProperty(propertyName);
+        return prop?.GetValue(item)?.ToString() ?? string.Empty;
+    }
+
+    private void CopyResultsToClipboard(DataGrid dataGrid)
+    {
+        if (_mainWindow.ResultsTab.IsSelected)
+        {
+            if (dataGrid == null || !dataGrid.CheckAccess())
+                return;
+
+            dataGrid.Dispatcher.Invoke(() =>
+            {
+                if (dataGrid.ItemsSource is IEnumerable<FilterResultItem> items && items.Any())
+                {
+                    var sb = new StringBuilder();
+
+                    foreach (var item in items)
+                    {
+                        sb.AppendLine($"Фильтры: {item.Filters}");
+                        sb.AppendLine($"Счетчик 1: {item.Counter}");
+                        sb.AppendLine($"Счетчик 2: {item.FullCounter}");
+                        sb.AppendLine(); // Пустая строка между записями
+                    }
+
+                    try
+                    {
+                        Clipboard.SetText(sb.ToString().TrimEnd()); // Удаляем последний перенос строки
+                    }
+                    catch (Exception ex)
+                    {
+                        // Обработка ошибок доступа к буферу обмена
+                        System.Diagnostics.Debug.WriteLine($"Ошибка при копировании в буфер обмена: {ex.Message}");
+                    }
+                }
+            });
+        }
+    }
+
+    public void ClearResultsButton_Click()
+    {
+        if (_mainWindow.ResultsTab.IsSelected)
+        {
+            // Копирование из ResultsDataGrid
+            _mainWindow.ResultsDataGrid.ItemsSource = null;
+            _mainWindow.ResultsDataGrid.Items.Refresh();
+        }
+        else if (_mainWindow.CalculatorTab.IsSelected)
+        {
+            // Копирование из ResultsDataGridCalc
+            _mainWindow.ResultsDataGridCalc.ItemsSource = null;
+            _mainWindow.ResultsDataGridCalc.Items.Refresh();
+        }
     }
 
     private string FormatFilters(FilterParameters filters)
