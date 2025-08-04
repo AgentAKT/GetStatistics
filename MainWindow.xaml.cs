@@ -46,10 +46,13 @@ namespace GetStatistics
         public string _currentLogFolderPath; // Хранит только путь к папке
         private WorkWithCounters _counterHelper;
         private GetLogFiles _getLogFiles;
+        public ObservableCollection<LogResult> LogResults { get; } = new ObservableCollection<LogResult>();
+        public ObservableCollection<CalculationResultItem> CalcResults { get; } = new ObservableCollection<CalculationResultItem>();
 
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = this;
             _configLoader = new ConfigLoader(
                 StringComboBox_One_Left,
                 StringComboBox_Two_Left,
@@ -84,7 +87,7 @@ namespace GetStatistics
             _counterHelper = new WorkWithCounters(this);
             _getLogFiles = new GetLogFiles();
             Loaded += OnMainWindowLoaded;
-            this.DataContext = this;
+            
 
             StatusText.Text = $"  Team78 (UAT)";
         }
@@ -94,9 +97,7 @@ namespace GetStatistics
             await _configLoader.LoadConfigAsync("config.json");
         }
 
-        public ObservableCollection<LogResult> LogResults { get; } = new ObservableCollection<LogResult>();
-        public ObservableCollection<CalculationResultItem> CalcResults { get; }
-        = new ObservableCollection<CalculationResultItem>();
+        
 
         public class CalculationResultItem
         {
@@ -502,7 +503,7 @@ namespace GetStatistics
 
                 // 2. Вычисляем разницу
                 TimeSpan difference = time2 - time1; // time2 - time1 (а не наоборот)
-                string result = $"Разница: {difference.TotalSeconds:0.000} сек";
+                string result = $"{difference.TotalSeconds:0.000} с";
 
                 // 3. Добавляем результат в коллекцию
                 _logCalcResults.Add(new LogCalcResult

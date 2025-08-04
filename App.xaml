@@ -258,5 +258,6 @@
                 <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
                 <Setter Property="IsReadOnly" Value="True"/>
             </Style>
+
     </Application.Resources>
 </Application>

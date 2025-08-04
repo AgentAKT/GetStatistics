@@ -188,39 +188,60 @@
                     <!-- Существующая вкладка с результатами -->
                     <TabControl Grid.Row="0" Grid.RowSpan="2">
                         <TabItem x:Name="ResultsTab" Header="Результаты">
-                            <DataGrid x:Name="ResultsDataGrid" Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding LogResults}">
+                            <DataGrid x:Name="ResultsDataGrid" 
+                  Style="{StaticResource ModernDataGrid}" 
+                  ItemsSource="{Binding LogResults}"
+                  AutoGenerateColumns="False">
+                                <DataGrid.Resources>
+                                    <!-- Стиль для ячеек с переносом текста -->
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="TextBlock.TextWrapping" Value="Wrap"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="DataGridCell">
+                                                    <Grid Background="{TemplateBinding Background}">
+                                                        <ContentPresenter VerticalAlignment="Center" Margin="4,2"/>
+                                                    </Grid>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </DataGrid.Resources>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Фильтры" Binding="{Binding Filters}" Width="230"/>
+                                    <DataGridTextColumn Header="Фильтры" Binding="{Binding Filters}" Width="230">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
                                     <DataGridTextColumn Header="Всего" Binding="{Binding Counter}" Width="90"/>
                                     <DataGridTextColumn Header="Уникальных" Binding="{Binding FullCounter}" Width="90"/>
                                     <DataGridTemplateColumn Header="Копировать" Width="Auto">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Button Content="⎘ Копировать" 
-                                            FontFamily="Segoe UI Symbol"
-                                            ToolTip="Копировать строку"
-                                            Click="CopyRowButton_Click"
-                                            Padding="2"
-                                            FontSize="12"
-                                            Style="{StaticResource ModernButton}"/>
+                                    FontFamily="Segoe UI Symbol"
+                                    ToolTip="Копировать строку"
+                                    Click="CopyRowButton_Click"
+                                    Padding="2"
+                                    FontSize="12"
+                                    Style="{StaticResource ModernButton}"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </TabItem>
+
                         <TabItem x:Name="CalculatorTab" Header="Калькулятор">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
-                                    <!-- Заголовки -->
                                     <RowDefinition Height="Auto"/>
-                                    <!-- Текстовые поля -->
                                     <RowDefinition Height="*"/>
-                                    <!-- DataGrid -->
                                 </Grid.RowDefinitions>
 
-                                <!-- Заголовки -->
                                 <Grid Grid.Row="0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -230,37 +251,59 @@
                                     <Label x:Name="Time2" Grid.Column="1" Content="Время 2" Margin="5"/>
                                 </Grid>
 
-                                <!-- Текстовые поля -->
                                 <Grid Grid.Row="1">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="Time1TextBox" Margin="5" 
-                    IsReadOnly="True" Style="{StaticResource ModernTextBox}"/>
-                                    <TextBox x:Name="Time2TextBox" Grid.Column="1" Margin="5"
-                    IsReadOnly="True" Style="{StaticResource ModernTextBox}"/>
+                                    <TextBox x:Name="Time1TextBox" Margin="5" IsReadOnly="True" Style="{StaticResource ModernTextBox}"/>
+                                    <TextBox x:Name="Time2TextBox" Grid.Column="1" Margin="5" IsReadOnly="True" Style="{StaticResource ModernTextBox}"/>
                                 </Grid>
 
-                                <!-- DataGrid -->
                                 <DataGrid x:Name="ResultsDataGridCalc" Grid.Row="2" 
-                                      Style="{StaticResource ModernDataGrid}" 
-                                      ItemsSource="{Binding CalcResults, Mode=OneWay}"
-                                      Margin="5">
+                      Style="{StaticResource ModernDataGrid}" 
+                      ItemsSource="{Binding CalcResults}"
+                      AutoGenerateColumns="False">
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridCell">
+                                            <Setter Property="TextBlock.TextWrapping" Value="Wrap"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="DataGridCell">
+                                                        <Grid Background="{TemplateBinding Background}">
+                                                            <ContentPresenter VerticalAlignment="Center" Margin="4,2"/>
+                                                        </Grid>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </DataGrid.Resources>
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Строка 1" Binding="{Binding LineText1}" Width="*"/>
-                                        <DataGridTextColumn Header="Строка 2" Binding="{Binding LineText2}" Width="*"/>
-                                        <DataGridTextColumn Header="Результат" Binding="{Binding Result}" Width="*"/>
-                                        <DataGridTemplateColumn Header="Копировать" Width="Auto">
+                                        <DataGridTextColumn Header="Строка 1" Binding="{Binding LineText1}" Width="*">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Строка 2" Binding="{Binding LineText2}" Width="Auto">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Результат" Binding="{Binding Result}" Width="75"/>
+                                        <DataGridTemplateColumn Header="Копировать" Width="75">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Button Content="⎘ Копировать" 
-                                                        FontFamily="Segoe UI Symbol"
-                                                        ToolTip="Копировать строку"
-                                                        Click="CopyRowButton_Click"
-                                                        Padding="2"
-                                                        FontSize="12"
-                                                        Style="{StaticResource ModernButton}"/>
+                                        FontFamily="Segoe UI Symbol"
+                                        ToolTip="Копировать строку"
+                                        Click="CopyRowButton_Click"
+                                        Padding="2"
+                                        FontSize="12"
+                                        Style="{StaticResource ModernButton}"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>

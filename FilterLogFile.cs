@@ -298,11 +298,17 @@ public class FilterLogFile
             {
                 _mainWindow.ResultsDataGrid.ItemsSource = new List<FilterResultItem> { newItem };
             }
-            else if (_mainWindow.ResultsDataGrid.ItemsSource is IList<FilterResultItem> itemsList)
+            else if (_mainWindow.ResultsDataGrid.ItemsSource is IList<LogResult> itemsList)
             {
-                itemsList.Add(newItem);
+                itemsList.Add(new LogResult
+                {
+                    Filters = FormatFilters(filters),
+                    Counter = counter.ToString(),
+                    FullCounter = fullCounter.ToString()
+                });
                 _mainWindow.ResultsDataGrid.Items.Refresh();
             }
+
         });
     }
     public void CopySingleCalcRowToClipboard(LogCalcResult item)
