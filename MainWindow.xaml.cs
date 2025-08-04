@@ -45,6 +45,7 @@ namespace GetStatistics
         private string _currentLogFile;     // Только имя файла
         public string _currentLogFolderPath; // Хранит только путь к папке
         private WorkWithCounters _counterHelper;
+        private GetLogFiles _getLogFiles;
 
         public MainWindow()
         {
@@ -79,10 +80,10 @@ namespace GetStatistics
             );
 
             _pathCombine = new PathCombine();
-
             _quoteManager = new QuoteManager("quotes.txt");
-            Loaded += OnMainWindowLoaded;
             _counterHelper = new WorkWithCounters(this);
+            _getLogFiles = new GetLogFiles();
+            Loaded += OnMainWindowLoaded;
 
             StatusText.Text = $"  Team78 (UAT)";
         }
@@ -94,44 +95,6 @@ namespace GetStatistics
 
         public ObservableCollection<LogResult> LogResults { get; } = new ObservableCollection<LogResult>();
 
-        private async Task GetLocalFiles(string path)
-        {
-            try
-            {
-                var patterns = new[] { "*.log", "*.usrlog", "*.txt" };
-                _logFiles = patterns.SelectMany(p => Directory.GetFiles(path, p))
-                                    .Distinct()
-                                    .ToList();
-            }
-            catch (Exception ex)
-            {
-                System.Windows.Forms.MessageBox.Show($"Ошибка: {ex.Message}");
-            }
-        }
-
-        private async Task<List<string>> GetLogFilesFromServerAsync(ServerConfig server)
-        {
-            var logFiles = new List<string>();
-
-            if (_sshClient != null && _sshClient.IsConnected)
-            {
-                var command = _sshClient.CreateCommand($"ls {server.Path} | grep -E '\\log$|\\.txt$'");
-                var result = await Task.Run(() => command.Execute());
-
-                if (command.ExitStatus == 0)
-                {
-                    logFiles = result.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                                    .Select(file => Path.Combine(server.Path, file))
-                                    .ToList();
-                }
-                else
-                {
-                    MessageBox.Show($"Ошибка получения списка файлов: {command.Error}");
-                }
-            }
-
-            return logFiles;
-        }
         public void UpdateLogList(List<string> filePaths)
         {
             try
@@ -181,42 +144,6 @@ namespace GetStatistics
             Debug.WriteLine($"Отображаем файлы: {fileNames.Count}");
         }
 
-        private void StopReadingLogs()
-        {
-            try
-            {
-                // 1. Остановка фонового чтения логов
-                _isReadingLogs = false;
-
-                //// 2. Закрытие SSH-соединения
-                //if (_sshClient != null && _sshClient.IsConnected)
-                //{
-                //    _sshClient.Disconnect();
-                //    _sshClient.Dispose();
-                //    _sshClient = null;
-                //}
-
-                //// 3. Очистка текущих данных
-                //_logFiles.Clear();
-                //_currentLogFilePath = string.Empty;
-
-                //// 4. Обновление UI
-                //Dispatcher.Invoke(() =>
-                //{
-                //    LogListBox.ItemsSource = null;
-                //    LogRichTextBox.Document.Blocks.Clear();
-                //});
-
-                //Debug.WriteLine("Чтение логов остановлено");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Ошибка при остановке чтения логов: {ex.Message}");
-                Dispatcher.Invoke(() =>
-                    MessageBox.Show($"Ошибка при остановке: {ex.Message}"));
-            }
-        }
-
         private async void LogList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!(LogList.SelectedItem is string selectedFileName)) return;
@@ -260,24 +187,6 @@ namespace GetStatistics
             }
         }
 
-        private bool CheckComboBoxes()
-        {
-            if (!string.IsNullOrEmpty(StringComboBox_One_Left.Text) &&
-                    string.IsNullOrEmpty(StringComboBox_Two_Left.Text) &&
-                    string.IsNullOrEmpty(SearchTextBoxLog_One_Left.Text) &&
-                    string.IsNullOrEmpty(SearchTextBoxLog_Two_Left.Text) &&
-                    string.IsNullOrEmpty(StringComboBox_One_Right.Text) &&
-                    string.IsNullOrEmpty(StringComboBox_Two_Right.Text) &&
-                    string.IsNullOrEmpty(SearchTextBoxLog_One_Right.Text) &&
-                    string.IsNullOrEmpty(SearchTextBoxLog_Two_Right.Text))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
         private async Task LoadLocalFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath))
@@ -361,18 +270,9 @@ namespace GetStatistics
         {
             if (e.Key == Key.Enter)
             {
-
-                //if (!string.IsNullOrEmpty(_currentLogFilePath) && ServerComboBox.SelectedItem is ServerConfig server)
-                //{
-                //    await _logFileService.LoadLogFile(_currentLogFilePath, server);
-                //    StatusText.Text = "Сортировка по левому фильтру...";
-                //}
-                //else
-                //{
                 await LoadLocalFile(_currentLogFilePath);
                 StatusText.Text = "Сортировка по левому фильтру...";
                 StartSearchInFilesButton_Left_Click(sender, e);
-                //}
             }
         }
 
@@ -492,8 +392,6 @@ namespace GetStatistics
                 ? new TextRange(lineStart, lineEnd).Text.Trim()
                 : null;
         }
-
-
 
         // Получает начало строки для данного TextPointer
         private TextPointer GetLineStart(TextPointer pointer)
@@ -781,7 +679,7 @@ namespace GetStatistics
 
             _currentLogFolderPath = selectedFolder;
             Console.WriteLine(_currentLogFolderPath);
-            await GetLocalFiles(_currentLogFolderPath);
+            _logFiles = await _getLogFiles.GetLocalFilesAsync(selectedFolder);
             ApplyFilters();
         }
 

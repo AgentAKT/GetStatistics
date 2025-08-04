@@ -145,6 +145,7 @@
     <Compile Include="FilterFiles.cs" />
     <Compile Include="FilterLogFile.cs" />
     <Compile Include="ConfigLoader.cs" />
+    <Compile Include="GetLogFiles.cs" />
     <Compile Include="Models\FilterParameters.cs" />
     <Compile Include="NetworkConnection.cs" />
     <Compile Include="LogFileService.cs" />
