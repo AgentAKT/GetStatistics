@@ -113,8 +113,13 @@
                     </Grid.ColumnDefinitions>
                     <CheckBox x:Name="Unical_CheckBox" Content="Уникальные" Grid.Column="0" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center" 
                               Checked="Unical_CheckBox_Checked" Unchecked="Unical_CheckBox_Unchecked"/>
-                    <CheckBox x:Name="CalculatorMode_CheckBox" Grid.Column="1" Content="Режим калькулятора" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center" 
-                              Checked="CalculatorMode_CheckBox_Checked" Unchecked="CalculatorMode_CheckBox_Unhecked"/>
+                    <CheckBox x:Name="CalculatorMode_CheckBox" 
+                                  Content="Режим калькулятора"
+                                  Grid.Column="1" 
+                                  VerticalAlignment="Center"
+                                  Style="{StaticResource ButtonLikeCheckBox}"
+                                  Checked="CalculatorMode_CheckBox_Checked" 
+                                  Unchecked="CalculatorMode_CheckBox_Unhecked"/>
                     <Button x:Name="StatisticIn24h_LeftButton" Grid.Column="2" Content="Статистика за 24 часа" 
                             MinWidth="120" HorizontalAlignment="Left" Click="ShowHourlyStatistics_Click" 
                             ToolTip="Показать статистику за 24 часа" Style="{StaticResource ModernButton}"/>
