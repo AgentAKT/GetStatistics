@@ -243,27 +243,33 @@
                                 </Grid.RowDefinitions>
 
                                 <Grid Grid.Row="0">
+                                    <!-- Или Grid.Row="1", если нужно сместить ниже -->
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <!-- Для Label -->
                                         <ColumnDefinition Width="*"/>
+                                        <!-- Для TextBox -->
+                                        <ColumnDefinition Width="Auto"/>
+                                        <!-- Для Label -->
                                         <ColumnDefinition Width="*"/>
+                                        <!-- Для TextBox -->
                                     </Grid.ColumnDefinitions>
-                                    <Label x:Name="Time1" Content="Время 1" Margin="5"/>
-                                    <Label x:Name="Time2" Grid.Column="1" Content="Время 2" Margin="5"/>
-                                </Grid>
 
-                                <Grid Grid.Row="1">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="Time1TextBox" Margin="5" IsReadOnly="True" Style="{StaticResource ModernTextBox}"/>
-                                    <TextBox x:Name="Time2TextBox" Grid.Column="1" Margin="5" IsReadOnly="True" Style="{StaticResource ModernTextBox}"/>
+                                    <!-- Время 1 -->
+                                    <Label x:Name="Time1" Content="Время 1" Margin="5" Grid.Column="0"/>
+                                    <TextBox x:Name="Time1TextBox" Margin="5" Grid.Column="1" 
+             IsReadOnly="True" Style="{StaticResource ModernTextBox}"/>
+
+                                    <!-- Время 2 -->
+                                    <Label x:Name="Time2" Content="Время 2" Margin="5" Grid.Column="2"/>
+                                    <TextBox x:Name="Time2TextBox" Margin="5" Grid.Column="3" 
+             IsReadOnly="True" Style="{StaticResource ModernTextBox}"/>
                                 </Grid>
 
                                 <DataGrid x:Name="ResultsDataGridCalc" Grid.Row="2" 
-                      Style="{StaticResource ModernDataGrid}" 
-                      ItemsSource="{Binding CalcResults}"
-                      AutoGenerateColumns="False">
+                                      Style="{StaticResource ModernDataGrid}" 
+                                      ItemsSource="{Binding CalcResults}"
+                                      AutoGenerateColumns="False">
                                     <DataGrid.Resources>
                                         <Style TargetType="DataGridCell">
                                             <Setter Property="TextBlock.TextWrapping" Value="Wrap"/>
@@ -279,31 +285,44 @@
                                         </Style>
                                     </DataGrid.Resources>
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Строка 1" Binding="{Binding LineText1}" Width="*">
+                                        <!-- Строка 1 - с динамической шириной и переносом -->
+                                        <DataGridTextColumn Header="Строка 1" Binding="{Binding LineText1}" 
+                        Width="*" MinWidth="150">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="TextWrapping" Value="Wrap"/>
+                                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-                                        <DataGridTextColumn Header="Строка 2" Binding="{Binding LineText2}" Width="Auto">
+
+                                        <!-- Строка 2 - с динамической шириной и переносом -->
+                                        <DataGridTextColumn Header="Строка 2" Binding="{Binding LineText2}" 
+                        Width="*" MinWidth="150">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="TextWrapping" Value="Wrap"/>
+                                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-                                        <DataGridTextColumn Header="Результат" Binding="{Binding Result}" Width="75"/>
-                                        <DataGridTemplateColumn Header="Копировать" Width="75">
+
+                                        <!-- Результат - фиксированная ширина -->
+                                        <DataGridTextColumn Header="Результат" Binding="{Binding Result}" 
+                        Width="65" MinWidth="75" MaxWidth="100"/>
+
+                                        <!-- Кнопка копирования - фиксированная ширина -->
+                                        <DataGridTemplateColumn Header="Копировать" 
+                            Width="100" MinWidth="75" MaxWidth="100">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Button Content="⎘ Копировать" 
-                                        FontFamily="Segoe UI Symbol"
-                                        ToolTip="Копировать строку"
-                                        Click="CopyRowButton_Click"
-                                        Padding="2"
-                                        FontSize="12"
-                                        Style="{StaticResource ModernButton}"/>
+                        FontFamily="Segoe UI Symbol"
+                        ToolTip="Копировать строку"
+                        Click="CopyRowButton_Click"
+                        Padding="2"
+                        FontSize="12"
+                        Style="{StaticResource ModernButton}"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
