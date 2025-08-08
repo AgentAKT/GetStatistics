@@ -18,6 +18,9 @@ using static FilterLogFile;
 using System.Windows.Media;
 using System.Text;
 using LogNavigator;
+using System.IO.Compression;
+using SharpCompress.Archives;
+using SharpCompress.Common;
 
 
 namespace GetStatistics
@@ -48,6 +51,10 @@ namespace GetStatistics
         private GetLogFiles _getLogFiles;
         public ObservableCollection<LogResult> LogResults { get; } = new ObservableCollection<LogResult>();
         public ObservableCollection<CalculationResultItem> CalcResults { get; } = new ObservableCollection<CalculationResultItem>();
+        private List<string> _foundArchives = new List<string>();
+        public string ArchivesCountText { get; set; }
+        public Visibility ArchivesPanelVisibility { get; set; } = Visibility.Collapsed;
+
 
         public MainWindow()
         {
@@ -629,6 +636,7 @@ namespace GetStatistics
         {
             _currentLogFolderPath = null;
             _currentLogFilePath = null;
+
             if (_sshClient != null && _sshClient.IsConnected)
             {
                 try
@@ -637,22 +645,18 @@ namespace GetStatistics
                     _sshClient.Dispose();
                     _sshClient = null;
                     Console.WriteLine("SSH-соединение было закрыто.");
-
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Ошибка при отключении SSH: {ex.Message}");
                 }
             }
+
             string selectedFolder;
 
-            // Определяем, какая кнопка вызвала событие
             if (sender == OpenFolderCK11)
             {
-                // Фиксированный путь для кнопки CK-11
                 selectedFolder = @"C:\Program Files\Monitel\CK-11\Client\Log";
-
-                // Проверяем существование папки
                 if (!Directory.Exists(selectedFolder))
                 {
                     MessageBox.Show($"Папка не найдена: {selectedFolder}");
@@ -661,9 +665,7 @@ namespace GetStatistics
             }
             else
             {
-                // Для обычной кнопки открываем диалог выбора папки
                 selectedFolder = OpenFolderDialog();
-
                 if (string.IsNullOrEmpty(selectedFolder))
                 {
                     MessageBox.Show("Выбор папки отменён.");
@@ -673,8 +675,119 @@ namespace GetStatistics
 
             _currentLogFolderPath = selectedFolder;
             Console.WriteLine(_currentLogFolderPath);
+
+
+
             _logFiles = await _getLogFiles.GetLocalFilesAsync(selectedFolder);
             ApplyFilters();
+            string[] archiveExtensions = { ".zip", ".rar", ".7z", ".gz", ".tar.gz" };
+
+            _foundArchives = Directory.GetFiles(selectedFolder, "*.*", SearchOption.TopDirectoryOnly)
+                .Where(f => archiveExtensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            if (_foundArchives.Any())
+            {
+                ArchivesCountLabel.Text = $"Архивов: {_foundArchives.Count}";
+                ArchivesPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                ArchivesPanel.Visibility = Visibility.Collapsed;
+            }
+        }
+
+
+        private async void ExtractArchives_Click(object sender, RoutedEventArgs e)
+        {
+            string extractPath = _currentLogFolderPath;
+            Directory.CreateDirectory(extractPath);
+
+            foreach (var archive in _foundArchives)
+            {
+                try
+                {
+                    if (archive.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ExtractZip(archive, extractPath);
+                    }
+                    else if (archive.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ExtractGzFile(archive, extractPath);
+                    }
+                    else
+                    {
+                        ExtractWithSharpCompress(archive, extractPath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при распаковке {Path.GetFileName(archive)}: {ex.Message}");
+                }
+                ArchivesPanel.Visibility = Visibility.Collapsed;
+            }
+
+            // Загружаем файлы уже из распакованной папки
+            _currentLogFolderPath = extractPath;
+            _logFiles = await _getLogFiles.GetLocalFilesAsync(extractPath);
+            ApplyFilters();
+
+            // Прячем панель архивов
+            _foundArchives.Clear();
+            ArchivesPanelVisibility = Visibility.Collapsed;
+
+            MessageBox.Show("Архивы успешно распакованы и загружены.");
+        }
+
+
+        // ZIP
+        private void ExtractZip(string zipPath, string extractPath)
+        {
+            using (var archive = ZipFile.OpenRead(zipPath))
+            {
+                foreach (var entry in archive.Entries)
+                {
+                    if (!entry.FullName.EndsWith("/"))
+                    {
+                        string destinationPath = Path.Combine(extractPath, entry.FullName);
+                        Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+                        entry.ExtractToFile(destinationPath, overwrite: true);
+                    }
+                }
+            }
+        }
+
+        // GZ
+        private void ExtractGzFile(string gzFilePath, string outputDir)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(gzFilePath);
+            string outputFilePath = Path.Combine(outputDir, fileName);
+
+            if (File.Exists(outputFilePath))
+                File.Delete(outputFilePath);
+
+            using (FileStream originalFileStream = File.OpenRead(gzFilePath))
+            using (FileStream decompressedFileStream = File.Create(outputFilePath))
+            using (GZipStream decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
+            {
+                decompressionStream.CopyTo(decompressedFileStream);
+            }
+        }
+
+        // RAR, 7Z, TAR.GZ
+        private void ExtractWithSharpCompress(string archivePath, string extractPath)
+        {
+            using (var archive = ArchiveFactory.Open(archivePath))
+            {
+                foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
+                {
+                    entry.WriteToDirectory(extractPath, new ExtractionOptions()
+                    {
+                        ExtractFullPath = true,
+                        Overwrite = true
+                    });
+                }
+            }
         }
 
         public void UpdateStatusText(string text)

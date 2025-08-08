@@ -44,10 +44,18 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <!-- Кнопки открытия -->
                         <RowDefinition Height="Auto"/>
+                        <!-- Поиск -->
                         <RowDefinition Height="Auto"/>
+                        <!-- Чекбокс -->
                         <RowDefinition Height="*"/>
+                        <!-- Панель архивов -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Список логов -->
                     </Grid.RowDefinitions>
+
+                    <!-- Кнопки -->
                     <Grid Grid.Row="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -58,6 +66,8 @@
                         <Button x:Name="OpenFolderCK11" Grid.Column="1" Content="CK-11" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}"/>
                         <Button x:Name="SSHConnectionButton" Grid.Column="2" Content="SSH" MinWidth="60" Click="OpenSSHConnectionWindow_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}" Height="26" Margin="4,4,4,0" VerticalAlignment="Top"/>
                     </Grid>
+
+                    <!-- Поиск -->
                     <Grid Grid.Row="1" Margin="0,4,0,4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -65,10 +75,22 @@
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="SearchTextBox" Grid.Column="0" Style="{StaticResource ModernTextBox}" TextChanged="SearchTextBox_TextChanged" ToolTip="Введите текст для поиска"/>
                     </Grid>
+
+                    <!-- Чекбокс -->
                     <CheckBox x:Name="TodayCheckBox" Grid.Row="2" Content="За текущую дату" Checked="TodayCheckBox_Checked" Unchecked="TodayCheckBox_Unchecked" Style="{StaticResource ModernCheckBox}"/>
+                    <!-- Список логов -->
                     <ListBox x:Name="LogList" Grid.Row="3" Style="{StaticResource ModernListBox}" SelectionChanged="LogList_SelectionChanged"/>
+
+                    <!-- Панель архивов -->
+                    <StackPanel x:Name="ArchivesPanel" Grid.Row="4" Orientation="Horizontal" Margin="5" Visibility="Collapsed">
+                        <TextBlock x:Name="ArchivesCountLabel" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button Content="Разархивировать" Click="ExtractArchives_Click"/>
+                    </StackPanel>
+
                 </Grid>
             </Border>
+
+
 
             <!-- Left Filter Panel -->
             <Border x:Name="LeftBorder" Grid.Row="0" Grid.Column="2" Style="{StaticResource SectionBorder}" Background="#FFF9F9F9">
