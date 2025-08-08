@@ -191,6 +191,7 @@ namespace GetStatistics
                         new ServerConfig { Protocol = "Local" }
                     );
                 }
+                StatusText.Text = _currentLogFilePath; 
             }
             catch (Exception ex)
             {
