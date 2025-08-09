@@ -1,0 +1,28 @@
+﻿<Window x:Class="NetworkLogDownloader.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Log Downloader" Height="400" Width="600">
+    <Grid Margin="10">
+        <TabControl x:Name="MainTabControl">
+            <TabItem Header="Сетевые папки">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListBox x:Name="SharedFoldersList" Height="200" Grid.Row="0" />
+
+                    <ProgressBar x:Name="DownloadProgressBar" Grid.Row="1" Height="20" Margin="0,10" Minimum="0" Maximum="100"/>
+
+                    <Button x:Name="DownloadButton" Content="Загрузить выбранное" Grid.Row="2" Margin="0,10,0,0" Width="150" HorizontalAlignment="Left" Click="DownloadButton_Click"/>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Локальные логи">
+                <ListBox x:Name="LocalLogsList" Margin="10" />
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

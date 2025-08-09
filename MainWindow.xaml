@@ -67,17 +67,29 @@
                         <Button x:Name="SSHConnectionButton" Grid.Column="2" Content="SSH" MinWidth="60" Click="OpenSSHConnectionWindow_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}" Height="26" Margin="4,4,4,0" VerticalAlignment="Top"/>
                     </Grid>
 
-                    <!-- Поиск -->
                     <Grid Grid.Row="1" Margin="0,4,0,4">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="SearchTextBox" Grid.Column="0" Style="{StaticResource ModernTextBox}" TextChanged="SearchTextBox_TextChanged" ToolTip="Введите текст для поиска"/>
+
+                        <TextBox x:Name="SearchTextBox" 
+             Grid.Column="1" 
+             Style="{StaticResource ModernTextBox}" 
+             TextChanged="SearchTextBox_TextChanged" 
+             ToolTip="Введите текст для поиска" 
+             VerticalAlignment="Center"/>
+
+                        <CheckBox x:Name="TodayCheckBox" 
+              Grid.Column="0"
+              Content="📅"
+              VerticalAlignment="Center"
+              Style="{StaticResource ButtonLikeCheckBox}"
+              Checked="TodayCheckBox_Checked" 
+              Unchecked="TodayCheckBox_Unchecked"
+              Margin="8,0,0,0"/>
                     </Grid>
 
-                    <!-- Чекбокс -->
-                    <CheckBox x:Name="TodayCheckBox" Grid.Row="2" Content="За текущую дату" Checked="TodayCheckBox_Checked" Unchecked="TodayCheckBox_Unchecked" Style="{StaticResource ModernCheckBox}"/>
                     <!-- Список логов -->
                     <ListBox x:Name="LogList" Grid.Row="3" Style="{StaticResource ModernListBox}" SelectionChanged="LogList_SelectionChanged"/>
 
