@@ -37,6 +37,7 @@ public class FilterLogFile
         _logContent = logContent;
     }
 
+    // Для обычного режима
     public void ApplyLogFilters(FilterParameters filters, bool isLeftFilter)
     {
         if (string.IsNullOrEmpty(_logContent))
@@ -46,6 +47,95 @@ public class FilterLogFile
         UpdateRichTextBox(filteredContent, filters, isLeftFilter);
         AddToResultsDataGrid(filters, _counter, _counter);
     }
+
+    // Для калькулятора — объединяем строки по левым или правым фильтрам
+    public void ApplyLogFilters(FilterParameters leftFilters, FilterParameters rightFilters)
+    {
+        if (string.IsNullOrEmpty(_logContent))
+            return;
+
+        var lines = _logContent.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        var combinedLines = new List<string>();
+        _counter = 0;
+
+        foreach (var line in lines)
+        {
+            bool matchesLeft = MatchFilters(line, leftFilters);
+            bool matchesRight = MatchFilters(line, rightFilters);
+
+            if (matchesLeft || matchesRight)
+            {
+                combinedLines.Add(line);
+                _counter++;
+            }
+        }
+
+        string filteredContent = string.Join("\n", combinedLines);
+
+        // Можно для подсветки объединить фильтры, например просто все фильтры из левого и правого
+        var combinedFilters = GetActiveFilters(leftFilters).Concat(GetActiveFilters(rightFilters)).Distinct().ToList();
+
+        // Создаем объект FilterParameters с комбинированными фильтрами (если надо), или просто передаем null и обрабатываем отдельно
+        // Но чтобы не ломать логику, сделаем обертку:
+
+        var combinedFilterParams = new FilterParameters
+        {
+            // Здесь можно взять поля из leftFilters или rightFilters, либо оставить пустыми,
+            // т.к. для подсветки мы передаем combinedFilters отдельно
+        };
+
+        UpdateRichTextBoxCalculatorMode(filteredContent, leftFilters, rightFilters);
+        AddToResultsDataGrid(combinedFilterParams, _counter, _counter);
+    }
+
+    private void UpdateRichTextBoxCalculatorMode(string logContent, FilterParameters leftFilters, FilterParameters rightFilters)
+    {
+        if (_logRichTextBox == null || !_logRichTextBox.CheckAccess())
+            return;
+
+        _logRichTextBox.Dispatcher.Invoke(() =>
+        {
+            var paragraph = new Paragraph();
+            var lines = logContent.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+            _counter = 0;
+
+            foreach (var line in lines)
+            {
+                bool matchesLeft = MatchFilters(line, leftFilters);
+                bool matchesRight = MatchFilters(line, rightFilters);
+
+                if (!matchesLeft && !matchesRight)
+                    continue;
+
+                var span = new Span();
+
+                // Если строка подходит под оба фильтра — можно подсветить оба набора фильтров по очереди
+                if (matchesLeft && matchesRight)
+                {
+                    FindAndHighlightMatches(span, line + "\n", GetActiveFilters(leftFilters), Brushes.Yellow);
+                    FindAndHighlightMatches(span, line + "\n", GetActiveFilters(rightFilters), Brushes.LightBlue);
+                }
+                else if (matchesLeft)
+                {
+                    FindAndHighlightMatches(span, line + "\n", GetActiveFilters(leftFilters), Brushes.Yellow);
+                }
+                else if (matchesRight)
+                {
+                    FindAndHighlightMatches(span, line + "\n", GetActiveFilters(rightFilters), Brushes.LightBlue);
+                }
+
+                paragraph.Inlines.Add(span);
+                _counter++;
+            }
+
+            _logRichTextBox.Document.Blocks.Clear();
+            _logRichTextBox.Document.Blocks.Add(paragraph);
+            _mainWindow.StringCounter_Main.Content = _counter.ToString();
+        });
+    }
+
+
 
     private string FilterContent(FilterParameters filters, bool isLeftFilter)
     {

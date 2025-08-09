@@ -238,7 +238,7 @@ namespace GetStatistics
                         {
                             string content = await streamReader.ReadToEndAsync();
                             LogRichTextBox.Document.Blocks.Clear();
-                            _logFileService.ApplyLogFilters(content, LogRichTextBox, true);
+                            _logFileService.ApplyLogFilters(content, LogRichTextBox, true, IsCalculatorMode());
                             return; // Успешно
                         }
                     }
@@ -858,41 +858,7 @@ namespace GetStatistics
             }
         }
 
-        private async void StartSearchInFilesButton_Left_Click(object sender, RoutedEventArgs e)
-        {
-            _counterHelper.ClearLeftCounter();
-            _counterHelper.ClearMainCounter();
-            if (string.IsNullOrEmpty(_currentLogFilePath))
-                return;
-
-            _isReadingLogs = false;
-
-            try
-            {
-                string content;
-
-                if (_sshClient != null && _sshClient.IsConnected)
-                {
-                    // Чтение файла через SSH (для Linux-сервера)
-                    content = await ReadFileViaSsh(_currentLogFilePath);
-                }
-                else
-                {
-                    // Чтение локального файла (старый код)
-                    Console.WriteLine(_currentLogFilePath);
-                    content = await ReadLocalFile(_currentLogFilePath);
-                }
-
-                _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: true);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Не удалось прочитать файл логов: {ex.Message}",
-                              "Ошибка",
-                              MessageBoxButton.OK,
-                              MessageBoxImage.Error);
-            }
-        }
+        
 
         // Метод для чтения файла через SSH
         private async Task<string> ReadFileViaSsh(string filePath)
@@ -934,40 +900,70 @@ namespace GetStatistics
             });
         }
 
+        private async Task<string> ReadLogFileContentAsync()
+        {
+            if (string.IsNullOrEmpty(_currentLogFilePath))
+                return null;
+
+            if (_sshClient != null && _sshClient.IsConnected)
+            {
+                // Чтение файла через SSH (для Linux-сервера)
+                return await ReadFileViaSsh(_currentLogFilePath);
+            }
+            else
+            {
+                // Чтение локального файла
+                Console.WriteLine(_currentLogFilePath);
+                return await ReadLocalFile(_currentLogFilePath);
+            }
+        }
+        public bool IsCalculatorMode()
+        {
+            return CalculatorMode_CheckBox?.IsChecked == true;
+        }
+
+        private async void StartSearchInFilesButton_Left_Click(object sender, RoutedEventArgs e)
+        {
+            await StartSearchAsync(isLeftFilter: true, IsCalculatorMode());
+        }
+
         private async void StartSearchInFilesButton_Right_Click(object sender, RoutedEventArgs e)
+        {
+            await StartSearchAsync(isLeftFilter: false, IsCalculatorMode());
+        }
+
+        private async Task StartSearchAsync(bool isLeftFilter, bool IsCalculatorMode)
         {
             _counterHelper.ClearLeftCounter();
             _counterHelper.ClearMainCounter();
-            if (string.IsNullOrEmpty(_currentLogFilePath))
+
+            if (_isReadingLogs)
                 return;
 
-            _isReadingLogs = false;
+            _isReadingLogs = true;
 
             try
             {
-                string content;
+                string content = await ReadLogFileContentAsync();
 
-                if (_sshClient != null && _sshClient.IsConnected)
-                {
-                    // Чтение файла через SSH (для Linux-сервера)
-                    content = await ReadFileViaSsh(_currentLogFilePath);
-                }
-                else
-                {
-                    // Чтение локального файла (старый код)
-                    content = await ReadLocalFile(_currentLogFilePath);
-                }
+                if (content == null)
+                    return;
 
-                _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: false);
+                _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter, IsCalculatorMode);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Не удалось прочитать файл логов: {ex.Message}",
-                              "Ошибка",
-                              MessageBoxButton.OK,
-                              MessageBoxImage.Error);
+                                "Ошибка",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+            }
+            finally
+            {
+                _isReadingLogs = false;
             }
         }
+
 
         // Очистить левые фильтры
         private void ClearButton_Left_Click(object sender, RoutedEventArgs e)

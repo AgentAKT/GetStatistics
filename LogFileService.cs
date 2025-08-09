@@ -56,7 +56,7 @@ public class LogFileService
                 content = await ReadLocalFile(filePath);
             }
 
-            ApplyLogFilters(content, _logRichTextBox, true);
+            ApplyLogFilters(content, _logRichTextBox, true, _mainWindow.IsCalculatorMode());
         }
         catch (Exception ex)
         {
@@ -131,18 +131,28 @@ public class LogFileService
         _logRichTextBox.Dispatcher.Invoke(() =>
         {
             _logRichTextBox.Document.Blocks.Clear();
-            ApplyLogFilters(content, _logRichTextBox, true);
+            ApplyLogFilters(content, _logRichTextBox, true, _mainWindow.IsCalculatorMode());
         });
     }
 
-    public void ApplyLogFilters(string content, RichTextBox richTextBox, bool isLeftFilter)
+    public void ApplyLogFilters(string content, RichTextBox richTextBox, bool isLeftFilter, bool isCalculatorMode)
     {
         var filterLogFile = new FilterLogFile(richTextBox, _mainWindow);
         filterLogFile.SetContent(content);
-        
-        var filters = isLeftFilter ? _getLeftFilters() : _getRightFilters();
-        filterLogFile.ApplyLogFilters(filters, isLeftFilter);
+
+        if (isCalculatorMode)
+        {
+            var leftFilters = _getLeftFilters();
+            var rightFilters = _getRightFilters();
+            filterLogFile.ApplyLogFilters(leftFilters, rightFilters);
+        }
+        else
+        {
+            var filters = isLeftFilter ? _getLeftFilters() : _getRightFilters();
+            filterLogFile.ApplyLogFilters(filters, isLeftFilter);
+        }
     }
+
 
     public bool MatchesFilter(string line, FilterParameters filterParams)
     {
