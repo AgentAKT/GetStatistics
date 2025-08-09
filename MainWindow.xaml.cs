@@ -19,8 +19,8 @@ using System.Windows.Media;
 using System.Text;
 using LogNavigator;
 using System.IO.Compression;
-using SharpCompress.Archives;
-using SharpCompress.Common;
+//using SharpCompress.Archives;
+//using SharpCompress.Common;
 
 
 namespace GetStatistics
@@ -777,17 +777,17 @@ namespace GetStatistics
         // RAR, 7Z, TAR.GZ
         private void ExtractWithSharpCompress(string archivePath, string extractPath)
         {
-            using (var archive = ArchiveFactory.Open(archivePath))
-            {
-                foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
-                {
-                    entry.WriteToDirectory(extractPath, new ExtractionOptions()
-                    {
-                        ExtractFullPath = true,
-                        Overwrite = true
-                    });
-                }
-            }
+            //using (var archive = ArchiveFactory.Open(archivePath))
+            //{
+            //    foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
+            //    {
+            //        entry.WriteToDirectory(extractPath, new ExtractionOptions()
+            //        {
+            //            ExtractFullPath = true,
+            //            Overwrite = true
+            //        });
+            //    }
+            //}
         }
 
         public void UpdateStatusText(string text)
