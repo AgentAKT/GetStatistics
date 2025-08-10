@@ -207,18 +207,18 @@ namespace GetStatistics
             }
         }
 
-        public void AddLogResultInDataGrid(string text)
+        public void AddLogResultInDataGrid(string message)
         {
+            // Добавляем новую запись
             LogResults.Add(new LogResult
             {
-                Filters = text,
-                Counter = null,
-                FullCounter = null
+                Filters = message,
+                Counter = "/",  // Специальное значение для служебных сообщений
+                FullCounter = "/"
             });
 
-            // Обновляем DataGrid
-            ResultsDataGrid.ItemsSource = null;
-            ResultsDataGrid.ItemsSource = LogResults;
+            // Обновляем DataGrid (более эффективный способ)
+            ResultsDataGrid.Items.Refresh();
             ResultsDataGrid.ScrollIntoView(LogResults.Last());
         }
 

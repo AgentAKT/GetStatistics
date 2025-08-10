@@ -13,6 +13,7 @@ using System.Collections;
 using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
 using static GetStatistics.MainWindow;
 using System.Windows.Data;
+using System.Diagnostics;
 
 public class FilterLogFile
 {
@@ -452,6 +453,44 @@ public class FilterLogFile
             System.Diagnostics.Debug.WriteLine($"Ошибка при копировании строки: {ex.Message}");
         }
     }
+    private bool CopyDataGridToClipboard(DataGrid dataGrid, Func<object, string> formatLine)
+    {
+        if (dataGrid == null || !dataGrid.CheckAccess())
+            return false;
+
+        try
+        {
+            dataGrid.Dispatcher.Invoke(() =>
+            {
+                if (dataGrid.ItemsSource == null || !dataGrid.ItemsSource.OfType<object>().Any())
+                {
+                    System.Diagnostics.Debug.WriteLine("Нет данных для копирования");
+                    _mainWindow.StatusText.Text = "Нет данных для копирования";
+                    return;
+                }
+
+                var sb = new StringBuilder();
+
+                foreach (var item in dataGrid.ItemsSource)
+                {
+                    sb.AppendLine(formatLine(item));
+                    sb.AppendLine(); // Пустая строка между записями
+                }
+
+                Clipboard.SetText(sb.ToString().TrimEnd());
+                System.Diagnostics.Debug.WriteLine("Данные скопированы в буфер обмена");
+                _mainWindow.StatusText.Text = "Данные скопированы";
+            });
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Ошибка копирования: {ex.Message}");
+            _mainWindow.StatusText.Text = "Ошибка копирования";
+            return false;
+        }
+    }
 
     public void CopyResultsToClipboard()
     {
@@ -467,46 +506,19 @@ public class FilterLogFile
 
     public void CopyCalcResultsToClipboard(DataGrid dataGrid)
     {
-        if (dataGrid == null || !dataGrid.CheckAccess())
-            return;
-
-        dataGrid.Dispatcher.Invoke(() =>
+        bool success = CopyDataGridToClipboard(dataGrid, item =>
         {
-            if (dataGrid.ItemsSource == null || !dataGrid.ItemsSource.OfType<object>().Any())
-            {
-                System.Diagnostics.Debug.WriteLine("Нет данных для копирования в ResultsDataGridCalc");
-                _mainWindow.StatusText.Text = "Нет данных для копирования";
-                return;
-            }
+            string line1 = GetCellValue(item, "LineText1");
+            string line2 = GetCellValue(item, "LineText2");
+            string result = GetCellValue(item, "Result");
 
-            var sb = new StringBuilder();
-
-            foreach (var item in dataGrid.ItemsSource)
-            {
-                // Получаем значения из колонок
-                string line1 = GetCellValue(item, "LineText1");
-                string line2 = GetCellValue(item, "LineText2");
-                string result = GetCellValue(item, "Result");
-
-                // Формируем вывод в нужном формате
-                sb.AppendLine($"Строка 1: \n {line1}");
-                sb.AppendLine($"Строка 2: \n {line2}");
-                sb.AppendLine($"Результат: {result}");
-                sb.AppendLine(); // Пустая строка между записями
-            }
-
-            try
-            {
-                Clipboard.SetText(sb.ToString().TrimEnd()); // Удаляем последний перенос строки
-                System.Diagnostics.Debug.WriteLine("Данные скопированы в буфер обмена");
-                _mainWindow.StatusText.Text = "Данные скопированы";
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Ошибка копирования: {ex.Message}");
-                _mainWindow.StatusText.Text = "Ошибка копирования";
-            }
+            return $"Строка 1: \n{line1}\nСтрока 2: \n{line2}\nРезультат: {result}";
         });
+
+        if (!success)
+        {
+            System.Diagnostics.Debug.WriteLine("Ошибка в CopyCalcResultsToClipboard");
+        }
     }
 
     // Вспомогательный метод для получения значения ячейки
@@ -518,38 +530,26 @@ public class FilterLogFile
         return prop?.GetValue(item)?.ToString() ?? string.Empty;
     }
 
-    private void CopyResultsToClipboard(DataGrid dataGrid)
+    public void CopyResultsToClipboard(DataGrid dataGrid)
     {
-        if (_mainWindow.ResultsTab.IsSelected)
+        bool success = CopyDataGridToClipboard(dataGrid, item =>
         {
-            if (dataGrid == null || !dataGrid.CheckAccess())
-                return;
-
-            dataGrid.Dispatcher.Invoke(() =>
+            if (item is LogResult logResult)
             {
-                if (dataGrid.ItemsSource is IEnumerable<FilterResultItem> items && items.Any())
+                // Для служебных сообщений (где Counter == "/")
+                if (logResult.Counter == "/" && logResult.FullCounter == "/")
                 {
-                    var sb = new StringBuilder();
-
-                    foreach (var item in items)
-                    {
-                        sb.AppendLine($"Фильтры: {item.Filters}");
-                        sb.AppendLine($"Счетчик 1: {item.Counter}");
-                        sb.AppendLine($"Счетчик 2: {item.FullCounter}");
-                        sb.AppendLine(); // Пустая строка между записями
-                    }
-
-                    try
-                    {
-                        Clipboard.SetText(sb.ToString().TrimEnd()); // Удаляем последний перенос строки
-                    }
-                    catch (Exception ex)
-                    {
-                        // Обработка ошибок доступа к буферу обмена
-                        System.Diagnostics.Debug.WriteLine($"Ошибка при копировании в буфер обмена: {ex.Message}");
-                    }
+                    return logResult.Filters; // Копируем только текст сообщения
                 }
-            });
+                // Для обычных результатов замеров
+                return $"Фильтры: {logResult.Filters}\nСчетчик 1: {logResult.Counter}\nСчетчик 2: {logResult.FullCounter}";
+            }
+            return string.Empty;
+        });
+
+        if (!success)
+        {
+            Debug.WriteLine("Ошибка в CopyResultsToClipboard");
         }
     }
 
