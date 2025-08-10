@@ -19,6 +19,7 @@ using System.Windows.Media;
 using System.Text;
 using LogNavigator;
 using System.IO.Compression;
+using MS.WindowsAPICodePack.Internal;
 //using SharpCompress.Archives;
 //using SharpCompress.Common;
 
@@ -166,7 +167,7 @@ namespace GetStatistics
         private async void LogList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!(LogList.SelectedItem is string selectedFileName)) return;
-
+            AddLogResultInDataGrid($"Файл: {selectedFileName}");
             try
             {
                 if (_sshClient != null && _sshClient.IsConnected)
@@ -175,7 +176,6 @@ namespace GetStatistics
                     // Для SSH используем полный путь из _logFiles
                     _currentLogFilePath = _logFiles.FirstOrDefault(f =>
                         Path.GetFileName(f).Equals(selectedFileName, StringComparison.OrdinalIgnoreCase));
-
                     if (string.IsNullOrEmpty(_currentLogFilePath))
                     {
                         MessageBox.Show("Файл не найден на сервере", "Ошибка",
@@ -198,13 +198,28 @@ namespace GetStatistics
                         new ServerConfig { Protocol = "Local" }
                     );
                 }
-                StatusText.Text = _currentLogFilePath; 
+                StatusText.Text = _currentLogFilePath;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка загрузки файла: {ex.Message}", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        public void AddLogResultInDataGrid(string text)
+        {
+            LogResults.Add(new LogResult
+            {
+                Filters = text,
+                Counter = null,
+                FullCounter = null
+            });
+
+            // Обновляем DataGrid
+            ResultsDataGrid.ItemsSource = null;
+            ResultsDataGrid.ItemsSource = LogResults;
+            ResultsDataGrid.ScrollIntoView(LogResults.Last());
         }
 
         private async Task LoadLocalFile(string filePath)
@@ -657,6 +672,7 @@ namespace GetStatistics
             if (sender == OpenFolderCK11)
             {
                 selectedFolder = @"C:\Program Files\Monitel\CK-11\Client\Log";
+                AddLogResultInDataGrid("Клиентские логи CK-11");
                 if (!Directory.Exists(selectedFolder))
                 {
                     MessageBox.Show($"Папка не найдена: {selectedFolder}");
@@ -666,6 +682,7 @@ namespace GetStatistics
             else
             {
                 selectedFolder = OpenFolderDialog();
+                AddLogResultInDataGrid(selectedFolder);
                 if (string.IsNullOrEmpty(selectedFolder))
                 {
                     MessageBox.Show("Выбор папки отменён.");
@@ -1192,7 +1209,7 @@ namespace GetStatistics
         {
             var sshWindow = new SSHConnectionWindow
             {
-                Owner = this // Важно установить владельца!
+                Owner = this 
             };
             sshWindow.ShowDialog();
         }
@@ -1372,6 +1389,22 @@ namespace GetStatistics
         private void ClearResultsButton_Click(object sender, RoutedEventArgs e)
         {
             _filterLogFile.ClearResultsButton_Click();
+        }
+
+        private void OpenSharedFoldersWindow_Click(object sender, RoutedEventArgs e)
+        {
+            var sharedFoldersWindow = new SharedFoldersWindow();
+            sharedFoldersWindow.Show();
+        }
+
+        private void OpenSSHConnectionWindow_Click(object sender, object e)
+        {
+           
+        }
+
+        private void OpenFolder_Click(object sender, object e)
+        {
+
         }
     }
 }

@@ -19,7 +19,14 @@
             <MenuItem Header="_Файл" Click="MenuItem_Click">
                 <Separator/>
             </MenuItem>
-            <MenuItem Header="_Настройки" Click="MenuItem_Click">
+            <MenuItem Header="Подключение к серверам" Click="OpenSharedFoldersWindow_Click">
+                <MenuItem.Icon>
+                    <TextBlock Text="📁" FontSize="16"/>
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="_Настройки">
+                
+                <!-- Другие пункты меню настроек -->
             </MenuItem>
             <MenuItem Header="_Справка" Click="MenuItem_Click_1"/>
         </Menu>

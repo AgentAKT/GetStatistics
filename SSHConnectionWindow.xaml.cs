@@ -70,6 +70,7 @@ namespace GetStatistics
                     var serverConfig = new ServerConfig
                     {
                         Host = txtHost.Text,
+                        Name = txtConnectionName.Text,
                         Username = txtUsername.Text,
                         Password = txtPassword.Password,
                         Path = txtPath.Text
@@ -78,7 +79,7 @@ namespace GetStatistics
                     var logFiles = await mainWindow.ConnectViaSsh(serverConfig);
                     mainWindow._currentLogFolderPath = ""; // Сбрасываем локальный путь
                     mainWindow.UpdateLogList(logFiles);
-
+                    mainWindow.AddLogResultInDataGrid($"SSH: {serverConfig.Name} {serverConfig.Host}");
                     Close();
                 }
                 catch (Exception ex)
@@ -148,6 +149,11 @@ namespace GetStatistics
                     dgConnections.Items.Refresh();
                 }
             }
+        }
+
+        private void Connect_Click(object sender, object e)
+        {
+
         }
     }
 }
