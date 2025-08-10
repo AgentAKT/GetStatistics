@@ -508,17 +508,24 @@ public class FilterLogFile
     {
         bool success = CopyDataGridToClipboard(dataGrid, item =>
         {
-            string line1 = GetCellValue(item, "LineText1");
-            string line2 = GetCellValue(item, "LineText2");
-            string result = GetCellValue(item, "Result");
-
-            return $"Строка 1: \n{line1}\nСтрока 2: \n{line2}\nРезультат: {result}";
+            if (item is LogCalcResult logCalcResult)
+            {
+                // Для служебных сообщений (где Counter == "/")
+                if (logCalcResult.LineText2 == "/" && logCalcResult.Result == "/")
+                {
+                    return logCalcResult.LineText1; // Копируем только текст сообщения
+                }
+                // Для обычных результатов замеров
+                return $"Строка 1: \n{logCalcResult.LineText1}\nСтрока 2: \n{logCalcResult.LineText2}\nРезультат: {logCalcResult.Result}";
+            }
+            return string.Empty;
         });
 
         if (!success)
         {
-            System.Diagnostics.Debug.WriteLine("Ошибка в CopyCalcResultsToClipboard");
+            Debug.WriteLine("Ошибка в CopyResultsToClipboard");
         }
+
     }
 
     // Вспомогательный метод для получения значения ячейки

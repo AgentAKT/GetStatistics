@@ -145,23 +145,41 @@ namespace GetStatistics
         // Фильтр файлов по условию
         public async void ApplyFilters()
         {
-            var filteredFiles = _logFiles;
-
-            // Логи за сегодня
-            if (_filterByToday)
+            try
             {
-                filteredFiles = await _filterFiles.FilterByToday(filteredFiles);
-            }
+                var filteredFiles = _logFiles;
+                string protocol = _sshClient?.IsConnected == true ? "SSH" : "Local";
 
-            // Фильтр логов по названию
-            if (!string.IsNullOrEmpty(_searchText))
+                // Логи за сегодня
+                if (_filterByToday)
+                {
+                    filteredFiles = await _filterFiles.FilterByToday(filteredFiles, protocol);
+                }
+
+                // Фильтр логов по названию
+                if (!string.IsNullOrEmpty(_searchText))
+                {
+                    filteredFiles = await _filterFiles.FilterFilesByName(filteredFiles, _searchText);
+                }
+
+                // Обновление UI
+                var fileNames = protocol == "SSH"
+                    ? filteredFiles.Select(f => Path.GetFileName(f.Replace('\\', '/'))).ToList()
+                    : filteredFiles.Select(Path.GetFileName).ToList();
+
+                LogList.Dispatcher.Invoke(() =>
+                {
+                    LogList.ItemsSource = fileNames;
+                    StatusText.Text = $"Найдено файлов: {fileNames.Count}";
+                });
+
+                Debug.WriteLine($"Отображаем файлов: {fileNames.Count}");
+            }
+            catch (Exception ex)
             {
-                filteredFiles = await _filterFiles.FilterFilesByName(filteredFiles, _searchText);
+                Debug.WriteLine($"Ошибка применения фильтров: {ex.Message}");
+                StatusText.Text = "Ошибка фильтрации";
             }
-
-            var fileNames = filteredFiles.Select(Path.GetFileName).ToList();
-            LogList.ItemsSource = fileNames;
-            Debug.WriteLine($"Отображаем файлы: {fileNames.Count}");
         }
 
         private async void LogList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -209,17 +227,36 @@ namespace GetStatistics
 
         public void AddLogResultInDataGrid(string message)
         {
-            // Добавляем новую запись
-            LogResults.Add(new LogResult
-            {
-                Filters = message,
-                Counter = "/",  // Специальное значение для служебных сообщений
-                FullCounter = "/"
-            });
 
-            // Обновляем DataGrid (более эффективный способ)
-            ResultsDataGrid.Items.Refresh();
-            ResultsDataGrid.ScrollIntoView(LogResults.Last());
+            if (ResultsTab.IsSelected)
+            {
+                // Добавляем новую запись
+                LogResults.Add(new LogResult
+                {
+                    Filters = message,
+                    Counter = "/",  // Специальное значение для служебных сообщений
+                    FullCounter = "/"
+                });
+
+                // Обновляем DataGrid (более эффективный способ)
+                ResultsDataGrid.Items.Refresh();
+                ResultsDataGrid.ScrollIntoView(LogResults.Last());
+            }
+            else if (CalculatorTab.IsSelected)
+            {
+                // Добавляем новую запись
+                _logCalcResults.Add(new LogCalcResult
+                {
+                    LineText1 = message,
+                    LineText2 = "/",  // Специальное значение для служебных сообщений
+                    Result = "/"
+                });
+
+                // Обновляем DataGrid (более эффективный способ)
+                ResultsDataGridCalc.Items.Refresh();
+                ResultsDataGridCalc.ScrollIntoView(LogResults.Last());
+            }
+            
         }
 
         private async Task LoadLocalFile(string filePath)
@@ -1375,6 +1412,7 @@ namespace GetStatistics
             RightBorder.Background = Brushes.LightBlue;
             RightBorder.BorderThickness = new Thickness(2);
             CalculatorTab.IsSelected = true;
+            AddLogResultInDataGrid(_currentLogFilePath);
         }
 
         private void CalculatorMode_CheckBox_Unhecked(object sender, RoutedEventArgs e)
