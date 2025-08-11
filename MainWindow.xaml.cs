@@ -20,6 +20,8 @@ using System.Text;
 using LogNavigator;
 using System.IO.Compression;
 using MS.WindowsAPICodePack.Internal;
+using System.Net;
+
 //using SharpCompress.Archives;
 //using SharpCompress.Common;
 
@@ -55,6 +57,7 @@ namespace GetStatistics
         private List<string> _foundArchives = new List<string>();
         public string ArchivesCountText { get; set; }
         public Visibility ArchivesPanelVisibility { get; set; } = Visibility.Collapsed;
+        private string _lastOpenedLocalFolder;
 
 
         public MainWindow()
@@ -670,18 +673,46 @@ namespace GetStatistics
 
         private string OpenFolderDialog()
         {
-            var dialog = new System.Windows.Forms.FolderBrowserDialog
+            try
             {
-                Description = "Выберите папку с логами",
-                ShowNewFolderButton = false
-            };
+                // Инициализируем диалог
+                var dialog = new System.Windows.Forms.FolderBrowserDialog
+                {
+                    Description = "Выберите папку с логами",
+                    ShowNewFolderButton = false
+                };
 
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                // Устанавливаем начальный путь из настроек (если он существует)
+                if (!string.IsNullOrEmpty(Properties.Settings.Default.LastOpenedFolder) &&
+                    Directory.Exists(Properties.Settings.Default.LastOpenedFolder))
+                {
+                    dialog.SelectedPath = Properties.Settings.Default.LastOpenedFolder;
+                }
+                else
+                {
+                    // Иначе используем стандартную папку "Мои документы"
+                    dialog.SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                }
+
+                // Показываем диалог
+                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    // Сохраняем выбранный путь в настройки
+                    Properties.Settings.Default.LastOpenedFolder = dialog.SelectedPath;
+                    Properties.Settings.Default.Save();
+
+                    return dialog.SelectedPath;
+                }
+            }
+            catch (Exception ex)
             {
-                return dialog.SelectedPath;
+                // Обработка ошибок
+                Console.WriteLine($"Ошибка при выборе папки: {ex.Message}");
+                MessageBox.Show("Не удалось открыть диалог выбора папки", "Ошибка",
+                              MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
-            return null; // или string.Empty, если выбор отменен
+            return null;
         }
 
         private async void OpenFolder_Click(object sender, RoutedEventArgs e)

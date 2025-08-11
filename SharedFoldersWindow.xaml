@@ -20,6 +20,8 @@
         <Style TargetType="Button" BasedOn="{StaticResource ModernButton}"/>
         <Style TargetType="ListView" BasedOn="{StaticResource ModernListView}"/>
         <Style TargetType="TreeView" BasedOn="{StaticResource ModernTreeView}"/>
+        <Style TargetType="ContextMenu" BasedOn="{StaticResource ModernContextMenu}"/>
+        <Style TargetType="MenuItem" BasedOn="{StaticResource ModernMenuItem}"/>
 
         <Style x:Key="SectionHeader" TargetType="Label">
             <Setter Property="FontWeight" Value="Bold"/>

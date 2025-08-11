@@ -151,10 +151,24 @@ namespace GetStatistics
 
             int skippedFiles = 0;
 
-            var folderDialog = new System.Windows.Forms.FolderBrowserDialog();
+            var folderDialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "Выберите папку для сохранения файлов",
+                ShowNewFolderButton = true,
+                // Устанавливаем начальный путь из настроек
+                SelectedPath = !string.IsNullOrEmpty(Properties.Settings.Default.LastOpenedFolder) &&
+                              Directory.Exists(Properties.Settings.Default.LastOpenedFolder)
+                    ? Properties.Settings.Default.LastOpenedFolder
+                    : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            };
+
             if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 string destination = folderDialog.SelectedPath;
+
+                // Сохраняем выбранный путь в настройки
+                Properties.Settings.Default.LastOpenedFolder = destination;
+                Properties.Settings.Default.Save();
 
                 try
                 {
@@ -178,7 +192,6 @@ namespace GetStatistics
                             break;
                         }
 
-
                         string destPath = Path.Combine(destination, file.Name);
                         string destDir = Path.GetDirectoryName(destPath);
 
@@ -191,38 +204,35 @@ namespace GetStatistics
                         {
                             if (File.Exists(destPath))
                             {
-
                                 var sourceFile = new FileInfo(file.Path);
                                 var destFile = new FileInfo(destPath);
 
-                                if (sourceFile.Length == destFile.Length && 
+                                if (sourceFile.Length == destFile.Length &&
                                     sourceFile.LastWriteTime == destFile.LastWriteTime)
                                 {
                                     skippedFiles++;
                                     continue;
                                 }
-                                
                             }
 
                             await Task.Run(() => File.Copy(file.Path, destPath, true));
                             processedFiles++;
-                            Dispatcher.Invoke(() => LoadingText.Text = $"Скачивание файлов ({processedFiles}/{totalFiles})...\n{file.Name}\n Пропущено: {skippedFiles}");
+                            Dispatcher.Invoke(() => LoadingText.Text =
+                                $"Скачивание файлов ({processedFiles}/{totalFiles})...\n" +
+                                $"{file.Name}\n" +
+                                $"Пропущено: {skippedFiles}");
                         }
                         catch (Exception ex)
                         {
-                            // Log error but continue with other files
                             Console.WriteLine($"Error copying {file.Path}: {ex.Message}");
                         }
                     }
 
-                    if (!_cancellationTokenSource.Token.IsCancellationRequested)
-                    {
-                        MessageBox.Show($"Скачивание завершено! Успешно скачано {processedFiles} из {totalFiles} файлов.");
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Операция прервана пользователем. Скачано {processedFiles} из {totalFiles} файлов.");
-                    }
+                    string message = _cancellationTokenSource.Token.IsCancellationRequested
+                        ? $"Операция прервана пользователем. Скачано {processedFiles} из {totalFiles} файлов."
+                        : $"Скачивание завершено! Успешно скачано {processedFiles} из {totalFiles} файлов.";
+
+                    MessageBox.Show(message);
                 }
                 catch (Exception ex)
                 {
