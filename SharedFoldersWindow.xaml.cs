@@ -9,6 +9,7 @@ using System.Linq;
 using static Org.BouncyCastle.Math.EC.ECCurve;
 using System.Windows.Controls;
 using System.Threading.Tasks;
+using System.Windows.Input;
 //using Microsoft.Win32;
 //using System.Text.Json;
 
@@ -138,6 +139,19 @@ namespace GetStatistics
                         HideLoader();
                     }
                 }
+            }
+        }
+
+        private void FoldersListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            // Проверяем, что щелчок был именно по элементу списка, а не по пустому месту
+            if (e.OriginalSource is FrameworkElement element && element.DataContext is SharedFolder selectedFolder)
+            {
+                // Устанавливаем путь в текстовое поле
+                ServerTextBox.Text = selectedFolder.SharePath;
+
+                // Автоматически подключаемся (можно убрать, если нужно только заполнять поле)
+                Connect_Click(null, null);
             }
         }
 

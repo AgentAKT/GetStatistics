@@ -34,6 +34,34 @@
             <Setter Property="Height" Value="6"/>
             <Setter Property="IsIndeterminate" Value="True"/>
         </Style>
+
+        <Style TargetType="ListViewItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListViewItem}">
+                        <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FFD3D3D3"/>
+                                <!-- Светло-серый -->
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#FF0078D7"/>
+                                <!-- Синий (стандартный для выделения) -->
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="10">
@@ -68,6 +96,7 @@
 
                 <ListView x:Name="FoldersListView" Grid.Row="1" 
                           SelectionChanged="FoldersListView_SelectionChanged"
+                          MouseDoubleClick="FoldersListView_MouseDoubleClick"
                           ItemsSource="{Binding SharedFolders}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
