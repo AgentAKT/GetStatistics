@@ -262,9 +262,13 @@
     <Resource Include="Assets\ssh_icon.png" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Icons\file.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Content Include="quotes.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

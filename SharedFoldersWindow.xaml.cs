@@ -518,6 +518,35 @@ namespace GetStatistics
             }
         }
 
+        private void EditFolder_Click(object sender, RoutedEventArgs e)
+        {
+            if (FoldersListView.SelectedItem is SharedFolder selectedFolder)
+            {
+                var dialog = new SharedFolderEditDialog(selectedFolder);
+                if (dialog.ShowDialog() == true)
+                {
+                    int index = SharedFolders.IndexOf(selectedFolder);
+                    SharedFolders[index] = dialog.Folder;
+                    SaveConfig();
+                }
+            }
+        }
+
+        private void DuplicateFolder_Click(object sender, RoutedEventArgs e)
+        {
+            if (FoldersListView.SelectedItem is SharedFolder selectedFolder)
+            {
+                var newFolder = new SharedFolder
+                {
+                    ServerName = $"{selectedFolder.ServerName} (копия)",
+                    SharePath = selectedFolder.SharePath
+                };
+
+                SharedFolders.Add(newFolder);
+                SaveConfig();
+            }
+        }
+
         private void FoldersListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (FoldersListView.SelectedItem == null) return;
@@ -544,6 +573,35 @@ namespace GetStatistics
                 OverlayGrid.Visibility = Visibility.Collapsed;
             });
         }
+
+        //private void EditFolder_Click(object sender, RoutedEventArgs e)
+        //{
+        //    if (FoldersListView.SelectedItem is SharedFolder selectedFolder)
+        //    {
+        //        var dialog = new SharedFolderEditDialog(selectedFolder);
+        //        if (dialog.ShowDialog() == true)
+        //        {
+        //            int index = SharedFolders.IndexOf(selectedFolder);
+        //            SharedFolders[index] = dialog.Folder;
+        //            SaveConfig();
+        //        }
+        //    }
+        //}
+
+        //private void DuplicateFolder_Click(object sender, RoutedEventArgs e)
+        //{
+        //    if (FoldersListView.SelectedItem is SharedFolder selectedFolder)
+        //    {
+        //        var newFolder = new SharedFolder
+        //        {
+        //            ServerName = $"{selectedFolder.ServerName} (копия)",
+        //            SharePath = selectedFolder.SharePath
+        //        };
+
+        //        SharedFolders.Add(newFolder);
+        //        SaveConfig();
+        //    }
+        //}
     }
 
     public class Config
