@@ -6,12 +6,10 @@ using System.Windows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using System.Windows.Controls;
 using System.Threading.Tasks;
 using System.Windows.Input;
-//using Microsoft.Win32;
-//using System.Text.Json;
+using System.Threading;
 
 namespace GetStatistics
 {
@@ -21,6 +19,9 @@ namespace GetStatistics
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "GetStatistics", "Configs", "SharedFoldersConfig.json");
 
+        private CancellationTokenSource _cancellationTokenSource;
+        private bool _isBatchDownloadRunning = false;
+
         public ObservableCollection<SharedFolder> SharedFolders { get; } = new ObservableCollection<SharedFolder>();
 
         public SharedFoldersWindow()
@@ -29,7 +30,6 @@ namespace GetStatistics
             DataContext = this;
             LoadConfig();
             Console.WriteLine(_configPath);
-            
         }
 
         private bool LoadConfig()
@@ -59,7 +59,6 @@ namespace GetStatistics
                     return false;
                 }
 
-                // Очищаем текущую коллекцию и добавляем загруженные элементы
                 SharedFolders.Clear();
                 foreach (var folder in config.SharedFolders)
                 {
@@ -142,46 +141,311 @@ namespace GetStatistics
             }
         }
 
+        private async void DownloadAllFiles_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isBatchDownloadRunning)
+            {
+                MessageBox.Show("Операция скачивания уже выполняется");
+                return;
+            }
+
+            int skippedFiles = 0;
+
+            var folderDialog = new System.Windows.Forms.FolderBrowserDialog();
+            if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                string destination = folderDialog.SelectedPath;
+
+                try
+                {
+                    _isBatchDownloadRunning = true;
+                    _cancellationTokenSource = new CancellationTokenSource();
+                    CancelDownloadButton.IsEnabled = true;
+                    DownloadAllButton.IsEnabled = false;
+
+                    // Get all files from the tree
+                    var allFiles = GetAllFilesFromTree(FilesTreeView.Items);
+                    int totalFiles = allFiles.Count;
+                    int processedFiles = 0;
+
+                    ShowLoader($"Скачивание файлов (0/{totalFiles})...");
+
+                    foreach (var file in allFiles)
+                    {
+                        if (_cancellationTokenSource.Token.IsCancellationRequested)
+                        {
+                            Dispatcher.Invoke(() => LoadingText.Text = "Отмена операции...");
+                            break;
+                        }
+
+
+                        string destPath = Path.Combine(destination, file.Name);
+                        string destDir = Path.GetDirectoryName(destPath);
+
+                        if (!Directory.Exists(destDir))
+                        {
+                            Directory.CreateDirectory(destDir);
+                        }
+
+                        try
+                        {
+                            if (File.Exists(destPath))
+                            {
+
+                                var sourceFile = new FileInfo(file.Path);
+                                var destFile = new FileInfo(destPath);
+
+                                if (sourceFile.Length == destFile.Length && 
+                                    sourceFile.LastWriteTime == destFile.LastWriteTime)
+                                {
+                                    skippedFiles++;
+                                    continue;
+                                }
+                                
+                            }
+
+                            await Task.Run(() => File.Copy(file.Path, destPath, true));
+                            processedFiles++;
+                            Dispatcher.Invoke(() => LoadingText.Text = $"Скачивание файлов ({processedFiles}/{totalFiles})...\n{file.Name}\n Пропущено: {skippedFiles}");
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log error but continue with other files
+                            Console.WriteLine($"Error copying {file.Path}: {ex.Message}");
+                        }
+                    }
+
+                    if (!_cancellationTokenSource.Token.IsCancellationRequested)
+                    {
+                        MessageBox.Show($"Скачивание завершено! Успешно скачано {processedFiles} из {totalFiles} файлов.");
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Операция прервана пользователем. Скачано {processedFiles} из {totalFiles} файлов.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при скачивании файлов: {ex.Message}");
+                }
+                finally
+                {
+                    _isBatchDownloadRunning = false;
+                    _cancellationTokenSource?.Dispose();
+                    _cancellationTokenSource = null;
+                    CancelDownloadButton.IsEnabled = false;
+                    DownloadAllButton.IsEnabled = true;
+                    HideLoader();
+                }
+            }
+        }
+
+        private List<FileSystemItem> GetAllFilesFromTree(ItemCollection items)
+        {
+            var files = new List<FileSystemItem>();
+
+            foreach (FileSystemItem item in items)
+            {
+                if (item.IsDirectory)
+                {
+                    files.AddRange(GetAllFilesFromDirectory(item));
+                }
+                else
+                {
+                    files.Add(item);
+                }
+            }
+
+            return files;
+        }
+
+        private List<FileSystemItem> GetAllFilesFromDirectory(FileSystemItem directory)
+        {
+            var files = new List<FileSystemItem>();
+
+            foreach (var child in directory.Children)
+            {
+                if (child.IsDirectory)
+                {
+                    files.AddRange(GetAllFilesFromDirectory(child));
+                }
+                else
+                {
+                    files.Add(child);
+                }
+            }
+
+            return files;
+        }
+
+        private void CancelDownload_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isBatchDownloadRunning && _cancellationTokenSource != null)
+            {
+                _cancellationTokenSource.Cancel();
+                CancelDownloadButton.IsEnabled = false;
+            }
+        }
+
         private void FoldersListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            // Проверяем, что щелчок был именно по элементу списка, а не по пустому месту
             if (e.OriginalSource is FrameworkElement element && element.DataContext is SharedFolder selectedFolder)
             {
-                // Устанавливаем путь в текстовое поле
                 ServerTextBox.Text = selectedFolder.SharePath;
-
-                // Автоматически подключаемся (можно убрать, если нужно только заполнять поле)
                 Connect_Click(null, null);
             }
         }
 
-        private async void DownloadFolder_Click(object sender, RoutedEventArgs e)
+        private async void AllDownload_Click(object sender, RoutedEventArgs e)
         {
-            if (FilesTreeView.SelectedItem is FileSystemItem item && item.IsDirectory)
+            if (_isBatchDownloadRunning)
             {
-                var folderDialog = new System.Windows.Forms.FolderBrowserDialog();
-                if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                MessageBox.Show("Операция скачивания уже выполняется");
+                return;
+            }
+
+            if (!SharedFolders.Any())
+            {
+                MessageBox.Show("Нет добавленных серверов для скачивания");
+                return;
+            }
+
+            try
+            {
+                _isBatchDownloadRunning = true;
+                _cancellationTokenSource = new CancellationTokenSource();
+                CancelDownloadButton.IsEnabled = true;
+                DownloadAllButton.IsEnabled = false;
+
+                // Создаем папку на рабочем столе
+                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                string folderName = $"{DateTime.Now:yyyyMMdd}_logs";
+                string mainFolderPath = Path.Combine(desktopPath, folderName);
+
+                if (!Directory.Exists(mainFolderPath))
                 {
-                    string destination = folderDialog.SelectedPath;
+                    Directory.CreateDirectory(mainFolderPath);
+                }
+
+                ShowLoader($"Начало скачивания...");
+
+                int totalServers = SharedFolders.Count;
+                int processedServers = 0;
+
+                foreach (var server in SharedFolders)
+                {
+                    if (_cancellationTokenSource.Token.IsCancellationRequested)
+                    {
+                        Dispatcher.Invoke(() => LoadingText.Text = "Отмена операции...");
+                        break;
+                    }
+
+                    processedServers++;
+                    Dispatcher.Invoke(() => LoadingText.Text = $"Обработка сервера {server.ServerName} ({processedServers}/{totalServers})...");
+
                     try
                     {
-                        ShowLoader("Скачивание папки...");
-                        await Task.Run(() => CopyDirectory(item.Path, Path.Combine(destination, item.Name)));
-                        MessageBox.Show("Папка успешно скачана!");
+                        // Создаем подпапку для сервера
+                        string serverFolderPath = Path.Combine(mainFolderPath, server.ServerName);
+                        if (!Directory.Exists(serverFolderPath))
+                        {
+                            Directory.CreateDirectory(serverFolderPath);
+                        }
+
+                        // Получаем все файлы из корневой папки сервера
+                        var files = await Task.Run(() =>
+                        {
+                            try
+                            {
+                                return Directory.GetFiles(server.SharePath);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Ошибка доступа к серверу {server.ServerName}: {ex.Message}");
+                                return Array.Empty<string>();
+                            }
+                        });
+
+                        int totalFiles = files.Length;
+                        int processedFiles = 0;
+
+                        foreach (var file in files)
+                        {
+                            if (_cancellationTokenSource.Token.IsCancellationRequested)
+                                break;
+
+                            try
+                            {
+                                string destPath = Path.Combine(serverFolderPath, Path.GetFileName(file));
+
+                                // Проверяем, существует ли файл
+                                if (File.Exists(destPath))
+                                {
+                                    // Сравниваем размер и дату изменения файлов
+                                    var sourceFileInfo = new FileInfo(file);
+                                    var destFileInfo = new FileInfo(destPath);
+
+                                    // Если файлы идентичны (по размеру и дате изменения) - пропускаем
+                                    if (sourceFileInfo.Length == destFileInfo.Length &&
+                                        sourceFileInfo.LastWriteTime == destFileInfo.LastWriteTime)
+                                    {
+                                        processedFiles++;
+                                        continue;
+                                    }
+
+                                    //// Если файлы разные, можно добавить суффикс (опционально)
+                                    //string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file);
+                                    //string extension = Path.GetExtension(file);
+                                    //int counter = 1;
+                                    //string newDestPath;
+                                    //do
+                                    //{
+                                    //    newDestPath = Path.Combine(serverFolderPath,
+                                    //        $"{fileNameWithoutExt}_{counter}{extension}");
+                                    //    counter++;
+                                    //} while (File.Exists(newDestPath));
+
+                                    //destPath = newDestPath;
+                                }
+
+                                await Task.Run(() => File.Copy(file, destPath, false)); // overwrite = false
+                                processedFiles++;
+                                Dispatcher.Invoke(() => LoadingText.Text =
+                                    $"Сервер {server.ServerName}: скачано {processedFiles}/{totalFiles} файлов");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Ошибка копирования файла {file}: {ex.Message}");
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Ошибка: {ex.Message}");
-                    }
-                    finally
-                    {
-                        HideLoader();
+                        Console.WriteLine($"Ошибка обработки сервера {server.ServerName}: {ex.Message}");
                     }
                 }
+
+                if (!_cancellationTokenSource.Token.IsCancellationRequested)
+                {
+                    MessageBox.Show($"Скачивание завершено! Файлы сохранены в папку {mainFolderPath}");
+                }
+                else
+                {
+                    MessageBox.Show($"Операция прервана пользователем. Часть файлов сохранена в {mainFolderPath}");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Выберите папку для скачивания");
+                MessageBox.Show($"Ошибка при скачивании файлов: {ex.Message}");
+            }
+            finally
+            {
+                _isBatchDownloadRunning = false;
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = null;
+                CancelDownloadButton.IsEnabled = false;
+                DownloadAllButton.IsEnabled = true;
+                HideLoader();
             }
         }
 
@@ -190,7 +454,7 @@ namespace GetStatistics
             Dispatcher.Invoke(() =>
             {
                 FilesTreeView.Items.Clear();
-                var root = new FileSystemItem { Name = Path.GetFileName(path), Path = path };
+                var root = new FileSystemItem { Name = Path.GetFileName(path), Path = path, IsDirectory = true };
                 LoadDirectory(root);
                 FilesTreeView.Items.Add(root);
             });
@@ -204,7 +468,7 @@ namespace GetStatistics
                 {
                     var child = new FileSystemItem { Name = Path.GetFileName(dir), Path = dir, IsDirectory = true };
                     item.Children.Add(child);
-                    LoadDirectory(child); // Рекурсивная загрузка
+                    LoadDirectory(child);
                 }
 
                 foreach (var file in Directory.GetFiles(item.Path))
@@ -213,34 +477,13 @@ namespace GetStatistics
                     {
                         Name = Path.GetFileName(file),
                         Path = file,
-                        Icon = "/Icons/file.png" // Ваша иконка
+                        Icon = "/Icons/file.png"
                     });
                 }
             }
             catch (UnauthorizedAccessException) { }
         }
 
-        //private void DownloadFile_Click(object sender, RoutedEventArgs e)
-        //{
-        //    if (FilesTreeView.SelectedItem is FileSystemItem item && !item.IsDirectory)
-        //    {
-        //        var saveDialog = new SaveFileDialog
-        //        {
-        //            FileName = item.Name,
-        //            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
-        //        };
-
-        //        if (saveDialog.ShowDialog() == true)
-        //        {
-        //            File.Copy(item.Path, saveDialog.FileName, overwrite: true);
-        //            MessageBox.Show("Файл успешно скачан!");
-        //        }
-        //    }
-        //}
-
-        
-
-        // Метод для копирования директории
         private void CopyDirectory(string sourceDir, string targetDir)
         {
             Directory.CreateDirectory(targetDir);
@@ -274,6 +517,7 @@ namespace GetStatistics
                 SaveConfig();
             }
         }
+
         private void FoldersListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (FoldersListView.SelectedItem == null) return;
@@ -283,7 +527,8 @@ namespace GetStatistics
                 ServerTextBox.Text = $@"{selectedFolder.SharePath}";
             }
         }
-    private void ShowLoader(string message = "Подключение...")
+
+        private void ShowLoader(string message = "Подключение...")
         {
             Dispatcher.Invoke(() =>
             {
@@ -301,11 +546,11 @@ namespace GetStatistics
         }
     }
 
-
     public class Config
     {
         public List<SharedFolder> SharedFolders { get; set; } = new List<SharedFolder>();
     }
+
     public class FileSystemItem
     {
         public string Name { get; set; }
