@@ -4,9 +4,12 @@ using Renci.SshNet;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 
 public class LogFileService
 {
@@ -53,15 +56,72 @@ public class LogFileService
                     throw new FileNotFoundException($"Файл не найден: {filePath}");
                 }
 
-                content = await ReadLocalFile(filePath);
+                long fileSize = (await GetFileSize(filePath, server, sshClient) / 1000000);
+                if (fileSize > 300) // 300MB
+                {
+                    if (!HasAtLeastOneFilter(_getLeftFilters()))
+                    {
+                        MessageBox.Show($"Размер {fileSize} Мб! \nВидит Бог я такого не вынесу!\n Добавь какой-нибудь фильтр");
+                    }
+                    {
+                        await ReadLocalFileLineByLineWithFiltering(filePath);
+                    }
+
+                }
+                else
+                { 
+                    content = await ReadLocalFile(filePath);
+                    ApplyLogFilters(content, _logRichTextBox, true, _mainWindow.IsCalculatorMode());
+                }
             }
 
-            ApplyLogFilters(content, _logRichTextBox, true, _mainWindow.IsCalculatorMode());
         }
         catch (Exception ex)
         {
             _statusText.Text = $"Ошибка: {ex.Message}";
             throw; // Перебрасываем исключение для обработки в UI
+        }
+    }
+
+    private bool HasAtLeastOneFilter(FilterParameters filters)
+    {
+        return !string.IsNullOrEmpty(filters.Filter_One) ||
+               !string.IsNullOrEmpty(filters.Filter_Two) ||
+               !string.IsNullOrEmpty(filters.SearchText_One) ||
+               !string.IsNullOrEmpty(filters.SearchText_Two);
+    }
+
+    private async Task<long> GetFileSize(string filePath, ServerConfig server, SshClient sshClient = null)
+    {
+        try
+        {
+            if (server.Protocol == "SSH" && sshClient != null && sshClient.IsConnected)
+            {
+                // Для SSH-соединения используем команду stat
+                var command = sshClient.CreateCommand($"stat -c%s '{filePath}'");
+                var result = await Task.Run(() => command.Execute());
+
+                if (command.ExitStatus == 0 && long.TryParse(result, out long fileSize))
+                {
+                    return fileSize;
+                }
+                throw new Exception($"Не удалось получить размер файла: {command.Error}");
+            }
+            else
+            {
+                // Для локального файла
+                var fileInfo = new FileInfo(filePath);
+                if (!fileInfo.Exists)
+                {
+                    throw new FileNotFoundException("Файл не найден", filePath);
+                }
+                return fileInfo.Length;
+            }
+        }
+        catch (Exception ex)
+        {
+            _mainWindow.StatusText.Text = $"Ошибка при получении размера файла: {ex.Message}";
+            throw;
         }
     }
 
@@ -91,6 +151,93 @@ public class LogFileService
             _mainWindow.StatusProgressBar.IsIndeterminate = false;
             _mainWindow.StatusText.Text = "Готово";
         }
+    }
+
+    private async Task ReadLocalFileLineByLineWithFiltering(string filePath)
+    {
+        try
+        {
+            // Показываем индикатор загрузки
+            _mainWindow.StatusProgressBar.Visibility = Visibility.Visible;
+            _mainWindow.StatusProgressBar.IsIndeterminate = true;
+            _mainWindow.StatusText.Text = "Чтение и фильтрация файла...";
+
+            // Получаем левые фильтры
+            var leftFilters = _getLeftFilters();
+            var activeFilters = GetActiveFilters(leftFilters);
+
+            // Очищаем RichTextBox перед началом
+            _logRichTextBox.Document.Blocks.Clear();
+            var paragraph = new Paragraph();
+            _logRichTextBox.Document.Blocks.Add(paragraph);
+
+            int lineCount = 0;
+            int matchedLines = 0;
+
+            using (var fileStream = new FileStream(
+                filePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite,
+                bufferSize: 65536,
+                FileOptions.SequentialScan | FileOptions.Asynchronous))
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                string line;
+                while ((line = await streamReader.ReadLineAsync()) != null)
+                {
+                    lineCount++;
+
+                    // Периодически обновляем статус
+                    if (lineCount % 1000 == 0)
+                    {
+                        _mainWindow.StatusText.Text = $"Обработано строк: {lineCount} | Найдено: {matchedLines}";
+                        await Task.Yield();
+                    }
+
+                    // Проверяем соответствие строки фильтрам
+                    if (activeFilters.Count > 0 && activeFilters.All(filter => line.Contains(filter)))
+                    {
+                        matchedLines++;
+
+                        // Добавляем строку в RichTextBox
+                        _logRichTextBox.Dispatcher.Invoke(() =>
+                        {
+                            paragraph.Inlines.Add(new Run(line + "\n"));
+                        });
+                    }
+                }
+            }
+
+            _mainWindow.StringCounter_Main.Content = matchedLines.ToString();
+            _mainWindow.StatusText.Text = $"Готово. Обработано строк: {lineCount} | Найдено: {matchedLines}";
+        }
+        catch (Exception ex)
+        {
+            _mainWindow.StatusText.Text = $"Ошибка: {ex.Message}";
+            throw;
+        }
+        finally
+        {
+            _mainWindow.StatusProgressBar.Visibility = Visibility.Collapsed;
+            _mainWindow.StatusProgressBar.IsIndeterminate = false;
+        }
+    }
+
+    private List<string> GetActiveFilters(FilterParameters filters)
+    {
+        var activeFilters = new List<string>();
+
+        if (!string.IsNullOrEmpty(filters.Filter_One))
+            activeFilters.Add(filters.Filter_One);
+        if (!string.IsNullOrEmpty(filters.Filter_Two))
+            activeFilters.Add(filters.Filter_Two);
+        if (!string.IsNullOrEmpty(filters.SearchText_One))
+            activeFilters.Add(filters.SearchText_One);
+        if (!string.IsNullOrEmpty(filters.SearchText_Two))
+            activeFilters.Add(filters.SearchText_Two);
+
+        return activeFilters;
     }
 
     private async Task<string> ReadSshFile(string filePath)

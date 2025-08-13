@@ -29,6 +29,7 @@
                 <!-- Другие пункты меню настроек -->
             </MenuItem>
             <MenuItem Header="_Справка" Click="MenuItem_Click_1"/>
+            <MenuItem Header="_Блокнот" Click="MenuItem_OpenNotepad_Click_1"/>
         </Menu>
 
         <Grid>

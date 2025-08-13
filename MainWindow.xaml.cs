@@ -1475,5 +1475,28 @@ namespace GetStatistics
         {
 
         }
+
+        private void MenuItem_OpenNotepad_Click_1(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Пытаемся открыть Notepad++
+                Process.Start("notepad++.exe", "-n");
+            }
+            catch (Exception)
+            {
+                try
+                {
+                    // Если Notepad++ не найден, открываем стандартный блокнот
+                    Process.Start("notepad.exe");
+                }
+                catch (Exception ex)
+                {
+                    // Если и блокнот не открывается, показываем сообщение об ошибке
+                    MessageBox.Show($"Не удалось открыть редактор: {ex.Message}", "Ошибка",
+                                  MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
     }
 }
