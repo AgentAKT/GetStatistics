@@ -10,10 +10,12 @@ using System.Windows.Controls;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Threading;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace GetStatistics
 {
-    public partial class SharedFoldersWindow : Window
+    public partial class SharedFoldersWindow : Window, INotifyPropertyChanged
     {
         private readonly string _configPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -21,15 +23,37 @@ namespace GetStatistics
 
         private CancellationTokenSource _cancellationTokenSource;
         private bool _isBatchDownloadRunning = false;
+        private ServerGroup _selectedGroup;
 
-        public ObservableCollection<SharedFolder> SharedFolders { get; } = new ObservableCollection<SharedFolder>();
+        public ObservableCollection<ServerGroup> ServerGroups { get; } = new ObservableCollection<ServerGroup>();
+
+        public ServerGroup SelectedGroup
+        {
+            get => _selectedGroup;
+            set
+            {
+                _selectedGroup = value;
+                OnPropertyChanged();
+                // Update the ServerTextBox when group changes
+                if (_selectedGroup != null && _selectedGroup.SharedFolders.Any())
+                {
+                    ServerTextBox.Text = _selectedGroup.SharedFolders.First().SharePath;
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public SharedFoldersWindow()
         {
             InitializeComponent();
             DataContext = this;
             LoadConfig();
-            Console.WriteLine(_configPath);
+        }
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         private bool LoadConfig()
@@ -38,15 +62,8 @@ namespace GetStatistics
             {
                 if (!File.Exists(_configPath))
                 {
-                    var defaultConfig = new Config { SharedFolders = new List<SharedFolder>() };
-
-                    var configDir = Path.GetDirectoryName(_configPath);
-                    if (!Directory.Exists(configDir))
-                    {
-                        Directory.CreateDirectory(configDir);
-                    }
-
-                    File.WriteAllText(_configPath, JsonConvert.SerializeObject(defaultConfig, Formatting.Indented));
+                    var defaultConfig = new Config { ServerGroups = new List<ServerGroup>() };
+                    SaveConfig(defaultConfig);
                     return true;
                 }
 
@@ -59,13 +76,23 @@ namespace GetStatistics
                     return false;
                 }
 
-                SharedFolders.Clear();
-                foreach (var folder in config.SharedFolders)
+                ServerGroups.Clear();
+                foreach (var group in config.ServerGroups)
                 {
-                    SharedFolders.Add(folder);
+                    var serverGroup = new ServerGroup(group.SharedFolders)
+                    {
+                        GroupName = group.GroupName
+                    };
+                    ServerGroups.Add(serverGroup);
                 }
 
-                FoldersListView.ItemsSource = SharedFolders;
+
+                GroupsComboBox.ItemsSource = ServerGroups;
+                if (ServerGroups.Any())
+                {
+                    SelectedGroup = ServerGroups.First();
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -75,18 +102,65 @@ namespace GetStatistics
             }
         }
 
-        private void SaveConfig()
+        private void SaveConfig(Config config = null)
         {
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(_configPath));
-                var config = new Config { SharedFolders = SharedFolders.ToList() };
-                var json = JsonConvert.SerializeObject(config, Formatting.Indented);
+                var configToSave = config ?? new Config
+                {
+                    ServerGroups = ServerGroups.Select(group => new ServerGroup
+                    {
+                        GroupName = group.GroupName,
+                        SharedFolders = new ObservableCollection<SharedFolder>(group.SharedFolders)
+                    }).ToList()
+                };
+
+                var json = JsonConvert.SerializeObject(configToSave, Formatting.Indented);
                 File.WriteAllText(_configPath, json);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка сохранения конфигурации: {ex.Message}");
+            }
+        }
+
+         
+        private void AddGroup_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new InputDialog("Введите название группы:");
+            if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.InputText))
+            {
+                var newGroup = new ServerGroup
+                {
+                    GroupName = dialog.InputText,
+                    SharedFolders = new ObservableCollection<SharedFolder>()
+                };
+
+                ServerGroups.Add(newGroup);
+                SelectedGroup = newGroup; 
+                SaveConfig(); 
+            }
+        }
+
+        private void RemoveGroup_Click(object sender, RoutedEventArgs e)
+        {
+            if (SelectedGroup != null)
+            {
+                if (MessageBox.Show($"Удалить группу '{SelectedGroup.GroupName}'?",
+                    "Подтверждение", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                {
+                    ServerGroups.Remove(SelectedGroup);
+                    if (ServerGroups.Any())
+                    {
+                        SelectedGroup = ServerGroups.First();
+                    }
+                    else
+                    {
+                        SelectedGroup = null;
+                    }
+                    SaveConfig();
+                }
             }
         }
 
@@ -314,9 +388,9 @@ namespace GetStatistics
                 return;
             }
 
-            if (!SharedFolders.Any())
+            if (SelectedGroup == null || !SelectedGroup.SharedFolders.Any())
             {
-                MessageBox.Show("Нет добавленных серверов для скачивания");
+                MessageBox.Show("В выбранной группе нет серверов для скачивания");
                 return;
             }
 
@@ -339,10 +413,10 @@ namespace GetStatistics
 
                 ShowLoader($"Начало скачивания...");
 
-                int totalServers = SharedFolders.Count;
+                int totalServers = SelectedGroup.SharedFolders.Count;
                 int processedServers = 0;
 
-                foreach (var server in SharedFolders)
+                foreach (var server in SelectedGroup.SharedFolders)
                 {
                     if (_cancellationTokenSource.Token.IsCancellationRequested)
                     {
@@ -511,36 +585,39 @@ namespace GetStatistics
 
         private void AddFolder_Click(object sender, RoutedEventArgs e)
         {
+            if (SelectedGroup == null) return;
+
             var dialog = new SharedFolderEditDialog();
             if (dialog.ShowDialog() == true)
             {
-                SharedFolders.Add(dialog.Folder);
+                SelectedGroup.SharedFolders.Add(dialog.Folder);
                 SaveConfig();
             }
         }
 
         private void RemoveFolder_Click(object sender, RoutedEventArgs e)
         {
-            if (FoldersListView.SelectedItem is SharedFolder folder)
-            {
-                SharedFolders.Remove(folder);
-                SaveConfig();
-            }
+            if (!(FoldersListView.SelectedItem is SharedFolder folder)) return;
+
+            SelectedGroup.SharedFolders.Remove(folder);
+            SaveConfig();
         }
 
         private void EditFolder_Click(object sender, RoutedEventArgs e)
         {
-            if (FoldersListView.SelectedItem is SharedFolder selectedFolder)
+            if (!(FoldersListView.SelectedItem is SharedFolder selectedFolder)) return;
+
+            var dialog = new SharedFolderEditDialog(selectedFolder);
+            if (dialog.ShowDialog() == true)
             {
-                var dialog = new SharedFolderEditDialog(selectedFolder);
-                if (dialog.ShowDialog() == true)
-                {
-                    int index = SharedFolders.IndexOf(selectedFolder);
-                    SharedFolders[index] = dialog.Folder;
-                    SaveConfig();
-                }
+                int index = SelectedGroup.SharedFolders.IndexOf(selectedFolder);
+                SelectedGroup.SharedFolders[index] = dialog.Folder;
+                SaveConfig();
             }
         }
+
+
+        
 
         private void DuplicateFolder_Click(object sender, RoutedEventArgs e)
         {
@@ -552,7 +629,7 @@ namespace GetStatistics
                     SharePath = selectedFolder.SharePath
                 };
 
-                SharedFolders.Add(newFolder);
+                SelectedGroup.SharedFolders.Add(newFolder);
                 SaveConfig();
             }
         }
@@ -582,6 +659,11 @@ namespace GetStatistics
             {
                 OverlayGrid.Visibility = Visibility.Collapsed;
             });
+        }
+
+        private void GroupsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
         }
 
         //private void EditFolder_Click(object sender, RoutedEventArgs e)
@@ -614,9 +696,32 @@ namespace GetStatistics
         //}
     }
 
+    // Модели данных
     public class Config
     {
-        public List<SharedFolder> SharedFolders { get; set; } = new List<SharedFolder>();
+        public List<ServerGroup> ServerGroups { get; set; } = new List<ServerGroup>();
+    }
+
+    public class ServerGroup
+    {
+        public string GroupName { get; set; }
+        public ObservableCollection<SharedFolder> SharedFolders { get; set; }
+
+        public ServerGroup()
+        {
+            SharedFolders = new ObservableCollection<SharedFolder>();
+        }
+
+        public ServerGroup(IEnumerable<SharedFolder> folders)
+        {
+            SharedFolders = new ObservableCollection<SharedFolder>(folders);
+        }
+    }
+
+    public class SharedFolder
+    {
+        public string ServerName { get; set; }
+        public string SharePath { get; set; }
     }
 
     public class FileSystemItem
@@ -627,4 +732,6 @@ namespace GetStatistics
         public bool IsDirectory { get; set; }
         public ObservableCollection<FileSystemItem> Children { get; } = new ObservableCollection<FileSystemItem>();
     }
+
+
 }

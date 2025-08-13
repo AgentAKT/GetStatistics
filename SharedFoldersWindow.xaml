@@ -22,6 +22,7 @@
         <Style TargetType="TreeView" BasedOn="{StaticResource ModernTreeView}"/>
         <Style TargetType="ContextMenu" BasedOn="{StaticResource ModernContextMenu}"/>
         <Style TargetType="MenuItem" BasedOn="{StaticResource ModernMenuItem}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource ModernComboBox}"/>
 
         <Style x:Key="SectionHeader" TargetType="Label">
             <Setter Property="FontWeight" Value="Bold"/>
@@ -36,34 +37,6 @@
             <Setter Property="Height" Value="6"/>
             <Setter Property="IsIndeterminate" Value="True"/>
         </Style>
-
-        <Style TargetType="ListViewItem">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ListViewItem}">
-                        <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#FFD3D3D3"/>
-                                <!-- Светло-серый -->
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#FF0078D7"/>
-                                <!-- Синий (стандартный для выделения) -->
-                                <Setter Property="Foreground" Value="White"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Window.Resources>
 
     <Grid Margin="10">
@@ -73,6 +46,7 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
+        <!-- Overlay Grid -->
         <Grid x:Name="OverlayGrid" Panel.ZIndex="1000" 
               Visibility="Collapsed" Background="#80000000">
             <Border Background="{StaticResource LightBackground}" 
@@ -85,56 +59,74 @@
             </Border>
         </Grid>
 
-        <!-- Левая панель: Список серверов и конфигурация -->
-        <GroupBox Grid.Column="0" Header="Конфигурация папок" Style="{StaticResource ModernGroupBox}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+        <!-- Левая панель: Управление группами и серверами -->
+        <GroupBox Grid.Column="0" Header="Конфигурация серверов" Style="{StaticResource ModernGroupBox}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-                <ListView x:Name="FoldersListView" Grid.Row="1" 
-          SelectionChanged="FoldersListView_SelectionChanged"
-          MouseDoubleClick="FoldersListView_MouseDoubleClick"
-          ItemsSource="{Binding SharedFolders}">
-                    <ListView.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="Добавить" Click="AddFolder_Click"/>
-                            <MenuItem Header="Редактировать" Click="EditFolder_Click"/>
-                            <MenuItem Header="Дублировать" Click="DuplicateFolder_Click"/>
-                            <MenuItem Header="Удалить" Click="RemoveFolder_Click"/>
-                        </ContextMenu>
-                    </ListView.ContextMenu>
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Margin="5">
-                                <TextBlock Text="{Binding ServerName}" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding SharePath}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+        <!-- Управление группами -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <ComboBox x:Name="GroupsComboBox" Width="200" 
+                      DisplayMemberPath="GroupName"
+                      SelectedValuePath="GroupName"
+                      SelectedItem="{Binding SelectedGroup, Mode=TwoWay}"/>
+            <Button Content="+" Width="30" Margin="5,0,0,0" Click="AddGroup_Click"/>
+            <Button Content="-" Width="30" Margin="5,0,0,0" Click="RemoveGroup_Click"/>
+        </StackPanel>
 
-                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                    <Button Content="Добавить" Width="100" Margin="0,0,10,0" Click="AddFolder_Click"/>
-                    <Button Content="Удалить" Width="100" Click="RemoveFolder_Click"/>
-                </StackPanel>
+        <!-- Управление серверами -->
+        <ListView x:Name="FoldersListView" Grid.Row="2" 
+                  ItemsSource="{Binding SelectedGroup.SharedFolders}"
+                  SelectionChanged="FoldersListView_SelectionChanged"
+                  MouseDoubleClick="FoldersListView_MouseDoubleClick">
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Добавить" Click="AddFolder_Click"/>
+                    <MenuItem Header="Редактировать" Click="EditFolder_Click"/>
+                    <MenuItem Header="Удалить" Click="RemoveFolder_Click"/>
+                </ContextMenu>
+            </ListView.ContextMenu>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Margin="5">
+                        <TextBlock Text="{Binding ServerName}" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding SharePath}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
 
-                <Label Grid.Row="3" Content="Быстрое подключение:" Style="{StaticResource SectionHeader}"/>
-                <TextBox x:Name="ServerTextBox" Grid.Row="4" 
-                         Text="\\server\share" Margin="0,0,0,5"/>
-                <Button Grid.Row="4" Content="Подключить" HorizontalAlignment="Right" 
-                        Width="100" Click="Connect_Click" Margin="0,0,0,5"/>
-            </Grid>
-        </GroupBox>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="Добавить сервер" Width="120" Margin="0,0,10,0" Click="AddFolder_Click"/>
+            <Button Content="Удалить сервер" Width="120" Click="RemoveFolder_Click"/>
+        </StackPanel>
 
-        <!-- Правая панель: Просмотр файлов -->
+        <Label Grid.Row="4" Content="Быстрое подключение:" Style="{StaticResource SectionHeader}"/>
+        
+        <Grid Grid.Row="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="ServerTextBox" 
+                     Text="\\server\share" Margin="0,0,5,0"/>
+            <Button Grid.Column="1" Content="Подключить" Width="100" Click="Connect_Click"/>
+        </Grid>
+    </Grid>
+</GroupBox>
+
+        <!-- Разделитель -->
         <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" 
                       Background="{StaticResource BorderColor}"/>
 
+        <!-- Правая панель: Просмотр файлов -->
         <GroupBox Grid.Column="2" Header="Содержимое папки" Style="{StaticResource ModernGroupBox}">
             <Grid>
                 <Grid.RowDefinitions>
@@ -155,7 +147,7 @@
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
                     <Button x:Name="DownloadAllButton" Content="Скачать все" Width="120" Margin="0,0,10,0" 
-                            Click="DownloadAllFiles_Click"/> 
+                            Click="DownloadAllFiles_Click"/>
                     <Button x:Name="CancelDownloadButton" Content="Отмена" Width="120" Margin="0,0,10,0" 
                             Click="CancelDownload_Click" IsEnabled="False"/>
                     <Button Content="Скачать файл" Width="120" Margin="0,0,10,0" Click="DownloadFile_Click"/>

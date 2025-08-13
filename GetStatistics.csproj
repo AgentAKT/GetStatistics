@@ -153,6 +153,9 @@
     <Compile Include="FilterLogFile.cs" />
     <Compile Include="ConfigLoader.cs" />
     <Compile Include="GetLogFiles.cs" />
+    <Compile Include="InputDialog.xaml.cs">
+      <DependentUpon>InputDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Models\FilterParameters.cs" />
     <Compile Include="Models\SharedFolder.cs" />
     <Compile Include="NetworkConnection.cs" />
@@ -172,6 +175,10 @@
       <DependentUpon>SSHConnectionWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="WorkWithCounters.cs" />
+    <Page Include="InputDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
