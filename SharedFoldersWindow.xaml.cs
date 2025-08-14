@@ -394,6 +394,18 @@ namespace GetStatistics
                 return;
             }
 
+            // Запрос подтверждения перед началом скачивания
+            var confirmationResult = MessageBox.Show(
+                "Будут скачаны все логи со всех серверов выбранной группы. Процесс может занять значительное время.\n\nПродолжить?",
+                "Подтверждение скачивания",
+                MessageBoxButton.OKCancel,
+                MessageBoxImage.Information);
+
+            if (confirmationResult != MessageBoxResult.OK)
+            {
+                return; // Пользователь отменил операцию
+            }
+
             try
             {
                 _isBatchDownloadRunning = true;
@@ -462,37 +474,20 @@ namespace GetStatistics
                             {
                                 string destPath = Path.Combine(serverFolderPath, Path.GetFileName(file));
 
-                                // Проверяем, существует ли файл
                                 if (File.Exists(destPath))
                                 {
-                                    // Сравниваем размер и дату изменения файлов
                                     var sourceFileInfo = new FileInfo(file);
                                     var destFileInfo = new FileInfo(destPath);
 
-                                    // Если файлы идентичны (по размеру и дате изменения) - пропускаем
                                     if (sourceFileInfo.Length == destFileInfo.Length &&
                                         sourceFileInfo.LastWriteTime == destFileInfo.LastWriteTime)
                                     {
                                         processedFiles++;
                                         continue;
                                     }
-
-                                    //// Если файлы разные, можно добавить суффикс (опционально)
-                                    //string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file);
-                                    //string extension = Path.GetExtension(file);
-                                    //int counter = 1;
-                                    //string newDestPath;
-                                    //do
-                                    //{
-                                    //    newDestPath = Path.Combine(serverFolderPath,
-                                    //        $"{fileNameWithoutExt}_{counter}{extension}");
-                                    //    counter++;
-                                    //} while (File.Exists(newDestPath));
-
-                                    //destPath = newDestPath;
                                 }
 
-                                await Task.Run(() => File.Copy(file, destPath, false)); // overwrite = false
+                                await Task.Run(() => File.Copy(file, destPath, false));
                                 processedFiles++;
                                 Dispatcher.Invoke(() => LoadingText.Text =
                                     $"Сервер {server.ServerName}: скачано {processedFiles}/{totalFiles} файлов");

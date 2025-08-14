@@ -257,7 +257,7 @@ namespace GetStatistics
 
                 // Обновляем DataGrid (более эффективный способ)
                 ResultsDataGridCalc.Items.Refresh();
-                ResultsDataGridCalc.ScrollIntoView(LogResults.Last());
+                //ResultsDataGridCalc.ScrollIntoView(LogResults.Last());
             }
             
         }
@@ -785,10 +785,13 @@ namespace GetStatistics
 
         private async void ExtractArchives_Click(object sender, RoutedEventArgs e)
         {
+            StatusProgressBar.Visibility = Visibility.Visible;
+            StatusProgressBar.IsIndeterminate = true; // Бесконечная анимация
+            StatusText.Text = "Распаковка архивов...";
             string extractPath = _currentLogFolderPath;
             Directory.CreateDirectory(extractPath);
 
-            foreach (var archive in _foundArchives)
+            foreach (var archive in _foundArchives.ToList()) // ToList() для создания копии коллекции
             {
                 try
                 {
@@ -804,12 +807,15 @@ namespace GetStatistics
                     {
                         ExtractWithSharpCompress(archive, extractPath);
                     }
+
+                    // Удаление архива после успешной распаковки
+                    File.Delete(archive);
+                    _foundArchives.Remove(archive); // Удаляем из коллекции
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Ошибка при распаковке {Path.GetFileName(archive)}: {ex.Message}");
                 }
-                ArchivesPanel.Visibility = Visibility.Collapsed;
             }
 
             // Загружаем файлы уже из распакованной папки
@@ -818,10 +824,10 @@ namespace GetStatistics
             ApplyFilters();
 
             // Прячем панель архивов
-            _foundArchives.Clear();
             ArchivesPanelVisibility = Visibility.Collapsed;
-
-            MessageBox.Show("Архивы успешно распакованы и загружены.");
+            StatusProgressBar.Visibility = Visibility.Collapsed;
+            StatusProgressBar.IsIndeterminate = false;
+            MessageBox.Show("Архивы успешно распакованы, исходные архивы удалены.");
         }
 
 
