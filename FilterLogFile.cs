@@ -190,6 +190,7 @@ public class FilterLogFile
             var paragraph = new Paragraph();
             var lines = logContent.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             var highlightBrush = isLeftFilter ? Brushes.Yellow : Brushes.LightBlue;
+            var uniqueHighlightBrush = Brushes.LightGreen; // Новый цвет для уникального текста
             var activeFilters = GetActiveFilters(filters);
 
             if (_mainWindow.Unical_CheckBox.IsChecked == true)
@@ -197,6 +198,7 @@ public class FilterLogFile
                 // Словарь для хранения уникальных совпадений
                 var uniqueMatches = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 _counter = 0;
+
                 foreach (var line in lines)
                 {
                     // Проверяем, содержит ли строка все активные фильтры (кроме SearchText_One и SearchText_Two)
@@ -206,7 +208,6 @@ public class FilterLogFile
                         if (filter != filters.SearchText_One &&
                             filter != filters.SearchText_Two &&
                             !line.Contains(filter))
-                            
                         {
                             matchesAllFilters = false;
                             break;
@@ -237,8 +238,15 @@ public class FilterLogFile
                     {
                         uniqueMatches[matchedText] = fullLine;
                         _counter++;
+
                         var span = new Span();
+
+                        // Сначала подсвечиваем обычные фильтры
                         FindAndHighlightMatches(span, fullLine, activeFilters, highlightBrush);
+
+                        // Затем подсвечиваем уникальный текст между SearchText_One и SearchText_Two другим цветом
+                        HighlightUniqueText(span, fullLine, filters.SearchText_One, filters.SearchText_Two, uniqueHighlightBrush);
+
                         paragraph.Inlines.Add(span);
                     }
                 }
@@ -264,12 +272,41 @@ public class FilterLogFile
                     paragraph.Inlines.Add(span);
                 }
             }
-            if (_mainWindow.Unical_CheckBox.IsChecked == true)
-            {
-            }
+
             _logRichTextBox.Document.Blocks.Clear();
             _logRichTextBox.Document.Blocks.Add(paragraph);
         });
+    }
+
+    // Упрощенная версия метода HighlightUniqueText
+    private void HighlightUniqueText(Span container, string text, string startText, string endText, Brush highlightBrush)
+    {
+        if (string.IsNullOrEmpty(startText) || string.IsNullOrEmpty(endText))
+            return;
+
+        int startIndex = text.IndexOf(startText);
+        if (startIndex == -1)
+            return;
+
+        startIndex += startText.Length;
+        int endIndex = text.IndexOf(endText, startIndex);
+        if (endIndex == -1)
+            return;
+
+        // Находим начало и конец уникального текста
+        string beforeText = text.Substring(0, startIndex);
+        string uniqueText = text.Substring(startIndex, endIndex - startIndex);
+        string afterText = text.Substring(endIndex);
+
+        // Очищаем контейнер и добавляем текст с подсветкой
+        container.Inlines.Clear();
+        container.Inlines.Add(new Run(beforeText));
+        container.Inlines.Add(new Run(uniqueText)
+        {
+            Background = highlightBrush,
+            FontWeight = FontWeights.Bold
+        });
+        container.Inlines.Add(new Run(afterText));
     }
 
     private void FindAndHighlightMatches(Span container, string text, List<string> filters, Brush highlightBrush)
