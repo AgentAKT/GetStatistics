@@ -14,6 +14,7 @@ using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.
 using static GetStatistics.MainWindow;
 using System.Windows.Data;
 using System.Diagnostics;
+using System.Collections.ObjectModel;
 
 public class FilterLogFile
 {
@@ -601,14 +602,20 @@ public class FilterLogFile
     {
         if (_mainWindow.ResultsTab.IsSelected)
         {
-            // Копирование из ResultsDataGrid
-            _mainWindow.ResultsDataGrid.ItemsSource = null;
+            // Очищаем коллекцию, а не присваиваем null
+            if (_mainWindow.ResultsDataGrid.ItemsSource is ObservableCollection<LogResult> logResults)
+            {
+                logResults.Clear();
+            }
             _mainWindow.ResultsDataGrid.Items.Refresh();
         }
         else if (_mainWindow.CalculatorTab.IsSelected)
         {
-            // Копирование из ResultsDataGridCalc
-            _mainWindow.ResultsDataGridCalc.ItemsSource = null;
+            // Очищаем коллекцию, а не присваиваем null
+            if (_mainWindow.ResultsDataGridCalc.ItemsSource is ObservableCollection<LogCalcResult> calcResults)
+            {
+                calcResults.Clear();
+            }
             _mainWindow.ResultsDataGridCalc.Items.Refresh();
         }
     }

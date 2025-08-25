@@ -70,6 +70,8 @@ namespace GetStatistics
                 StringComboBox_One_Right,
                 StringComboBox_Two_Right);
             LoadConfig();
+            ResultsDataGrid.ItemsSource = LogResults;
+            ResultsDataGridCalc.ItemsSource = _logCalcResults;
             _networkConnection = new NetworkConnection();
             _filterFiles = new FilterFiles(this);
             _filterLogFile = new FilterLogFile(LogRichTextBox, this);
@@ -230,36 +232,42 @@ namespace GetStatistics
 
         public void AddLogResultInDataGrid(string message)
         {
-
             if (ResultsTab.IsSelected)
             {
-                // Добавляем новую запись
+                // Проверяем, что ItemsSource установлен правильно
+                if (ResultsDataGrid.ItemsSource == null)
+                {
+                    ResultsDataGrid.ItemsSource = LogResults;
+                }
+
                 LogResults.Add(new LogResult
                 {
                     Filters = message,
-                    Counter = "/",  // Специальное значение для служебных сообщений
+                    Counter = "/",
                     FullCounter = "/"
                 });
 
-                // Обновляем DataGrid (более эффективный способ)
                 ResultsDataGrid.Items.Refresh();
                 ResultsDataGrid.ScrollIntoView(LogResults.Last());
             }
             else if (CalculatorTab.IsSelected)
             {
-                // Добавляем новую запись
+                // Проверяем, что ItemsSource установлен правильно
+                if (ResultsDataGridCalc.ItemsSource == null)
+                {
+                    ResultsDataGridCalc.ItemsSource = _logCalcResults;
+                }
+
                 _logCalcResults.Add(new LogCalcResult
                 {
                     LineText1 = message,
-                    LineText2 = "/",  // Специальное значение для служебных сообщений
+                    LineText2 = "/",
                     Result = "/"
                 });
 
-                // Обновляем DataGrid (более эффективный способ)
                 ResultsDataGridCalc.Items.Refresh();
-                //ResultsDataGridCalc.ScrollIntoView(LogResults.Last());
+                ResultsDataGridCalc.ScrollIntoView(_logCalcResults.Last());
             }
-            
         }
 
         private async Task LoadLocalFile(string filePath)
