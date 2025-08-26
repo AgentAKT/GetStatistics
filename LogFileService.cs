@@ -48,6 +48,9 @@ public class LogFileService
                 {
                     throw new Exception($"SSH error: {command.Error}");
                 }
+
+                // Добавить эту строку для отображения
+                ApplyLogFilters(content, _logRichTextBox, true, _mainWindow.IsCalculatorMode());
             }
             else
             {

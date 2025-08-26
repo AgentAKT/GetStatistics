@@ -15,14 +15,12 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </Window.Resources>
 
-
     <DockPanel Background="{StaticResource LightBackground}">
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_Файл" Click="MenuItem_Click">
                 <Separator/>
             </MenuItem>
             <MenuItem Header="_Настройки">
-
                 <!-- Другие пункты меню настроек -->
             </MenuItem>
             <MenuItem Header="_Справка" Click="MenuItem_Click_1"/>
@@ -31,11 +29,20 @@
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="250"/>
-                <ColumnDefinition Width="10"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="600"/>
+                <ColumnDefinition Width="250" MinWidth="200"/>
+                <!-- Левая панель -->
+                <ColumnDefinition Width="5"/>
+                <!-- Разделитель 1 -->
+                <ColumnDefinition Width="*" MinWidth="300"/>
+                <!-- Центральная область -->
+                <ColumnDefinition Width="5"/>
+                <!-- Разделитель 2 -->
+                <ColumnDefinition Width="*" MinWidth="300"/>
+                <!-- Правая область -->
+                <ColumnDefinition Width="5"/>
+                <!-- Разделитель 3 -->
+                <ColumnDefinition Width="*" MinWidth="400"/>
+                <!-- Results panel -->
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -44,20 +51,15 @@
                 <RowDefinition Height="25"/>
             </Grid.RowDefinitions>
 
-            <!-- Left Panel -->
+            <!-- Left Panel - LogList -->
             <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Style="{StaticResource SectionBorder}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <!-- Кнопки открытия -->
                         <RowDefinition Height="Auto"/>
-                        <!-- Поиск -->
                         <RowDefinition Height="Auto"/>
-                        <!-- Чекбокс -->
                         <RowDefinition Height="*"/>
-                        <!-- Панель архивов -->
                         <RowDefinition Height="Auto"/>
-                        <!-- Список логов -->
                     </Grid.RowDefinitions>
 
                     <!-- Кнопки -->
@@ -97,14 +99,14 @@
               Unchecked="TodayCheckBox_Unchecked"
               Margin="8,0,0,0"/>
                     </Grid>
-                    
+
                     <!-- Список логов -->
                     <ListBox x:Name="LogList"  Grid.Row="3" Style="{StaticResource ModernListBox}" SelectionChanged="LogList_SelectionChanged">
                         <ListBox.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="Сохранить на локальный компьютер" Style="{StaticResource ModernMenuItem}"
                                 Click="SaveFileToLocal_Click"
-                                Visibility="{Binding IsSSHConnected, Converter={StaticResource BoolToVisibilityConverter}}"/> 
+                                Visibility="{Binding IsSSHConnected, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                 <MenuItem Header="Открыть в проводнике" Style="{StaticResource ModernMenuItem}"
                                 Click="OpenInExplorer_Click"
                                 Visibility="{Binding IsLocal, Converter={StaticResource BoolToVisibilityConverter}}"/>
@@ -117,11 +119,14 @@
                         <TextBlock x:Name="ArchivesCountLabel" VerticalAlignment="Center" Margin="0,0,10,0"/>
                         <Button Content="Разархивировать" Click="ExtractArchives_Click"/>
                     </StackPanel>
-
                 </Grid>
             </Border>
 
-
+            <!-- Splitter между левой панелью и центральной областью -->
+            <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" 
+                         Width="5" HorizontalAlignment="Stretch" 
+                         Background="Transparent" 
+                         ShowsPreview="True"/>
 
             <!-- Left Filter Panel -->
             <Border x:Name="LeftBorder" Grid.Row="0" Grid.Column="2" Style="{StaticResource SectionBorder}" Background="#FFF9F9F9">
@@ -154,7 +159,7 @@
             </Border>
 
             <!-- Statistics Panel -->
-            <Border Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Style="{StaticResource SectionBorder}" Background="#FFF0F7FF">
+            <Border Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="3" Style="{StaticResource SectionBorder}" Background="#FFF0F7FF">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -184,8 +189,14 @@
                 </Grid>
             </Border>
 
+            <!-- Splitter между центральной и правой областью -->
+            <GridSplitter Grid.Row="0" Grid.Column="3" Grid.RowSpan="3" 
+                         Width="5" HorizontalAlignment="Stretch" 
+                         Background="Transparent" 
+                         ShowsPreview="True"/>
+
             <!-- Right Filter Panel -->
-            <Border x:Name="RightBorder" Grid.Row="0" Grid.Column="3" Style="{StaticResource SectionBorder}" Background="#FFF9F9F9">
+            <Border x:Name="RightBorder" Grid.Row="0" Grid.Column="4" Style="{StaticResource SectionBorder}" Background="#FFF9F9F9">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -214,8 +225,14 @@
                 </Grid>
             </Border>
 
+            <!-- Splitter между правой областью и результатами -->
+            <GridSplitter Grid.Row="0" Grid.Column="5" Grid.RowSpan="3" 
+                         Width="5" HorizontalAlignment="Stretch" 
+                         Background="Transparent" 
+                         ShowsPreview="True"/>
+
             <!-- Main Log Display -->
-            <Border Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Style="{StaticResource SectionBorder}" Margin="0,4,0,0">
+            <Border Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Style="{StaticResource SectionBorder}" Margin="0,4,0,0">
                 <RichTextBox x:Name="LogRichTextBox" Style="{StaticResource ModernRichTextBox}" 
                             IsDocumentEnabled="True" 
                             TextChanged="LogRichTextBox_TextChanged" 
@@ -235,7 +252,7 @@
             </Border>
 
             <!-- Results Panel -->
-            <Border Grid.Row="0" Grid.Column="4" Grid.RowSpan="3" Style="{StaticResource SectionBorder}">
+            <Border Grid.Row="0" Grid.Column="6" Grid.RowSpan="3" Style="{StaticResource SectionBorder}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -243,7 +260,6 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Существующая вкладка с результатами -->
                     <TabControl Grid.Row="0" Grid.RowSpan="2">
                         <TabItem x:Name="ResultsTab" Header="Результаты">
                             <DataGrid x:Name="ResultsDataGrid" 
@@ -251,7 +267,6 @@
                   ItemsSource="{Binding LogResults}"
                   AutoGenerateColumns="False">
                                 <DataGrid.Resources>
-                                    <!-- Стиль для ячеек с переносом текста -->
                                     <Style TargetType="DataGridCell">
                                         <Setter Property="TextBlock.TextWrapping" Value="Wrap"/>
                                         <Setter Property="Template">
@@ -266,19 +281,19 @@
                                     </Style>
                                 </DataGrid.Resources>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Фильтры" Binding="{Binding Filters}" Width="230">
+                                    <DataGridTextColumn Header="Фильтры" Binding="{Binding Filters}" Width="*" MinWidth="150">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="TextWrapping" Value="Wrap"/>
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="Всего" Binding="{Binding Counter}" Width="90"/>
-                                    <DataGridTextColumn Header="Уникальных" Binding="{Binding FullCounter}" Width="90"/>
-                                    <DataGridTemplateColumn Header="Копировать" Width="Auto">
+                                    <DataGridTextColumn Header="Всего" Binding="{Binding Counter}" Width="80" MinWidth="60"/>
+                                    <DataGridTextColumn Header="Уникальных" Binding="{Binding FullCounter}" Width="90" MinWidth="70"/>
+                                    <DataGridTemplateColumn Header="Копировать" Width="80" MinWidth="60">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Button Content="⎘ Копировать" 
+                                                <Button Content="⎘" 
                                     FontFamily="Segoe UI Symbol"
                                     ToolTip="Копировать строку"
                                     Click="CopyRowButton_Click"
@@ -301,24 +316,17 @@
                                 </Grid.RowDefinitions>
 
                                 <Grid Grid.Row="0">
-                                    <!-- Или Grid.Row="1", если нужно сместить ниже -->
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
-                                        <!-- Для Label -->
                                         <ColumnDefinition Width="*"/>
-                                        <!-- Для TextBox -->
                                         <ColumnDefinition Width="Auto"/>
-                                        <!-- Для Label -->
                                         <ColumnDefinition Width="*"/>
-                                        <!-- Для TextBox -->
                                     </Grid.ColumnDefinitions>
 
-                                    <!-- Время 1 -->
                                     <Label x:Name="Time1" Content="Время 1" Margin="5" Grid.Column="0"/>
                                     <TextBox x:Name="Time1TextBox" Margin="5" Grid.Column="1" 
              IsReadOnly="True" Style="{StaticResource ModernTextBox}"/>
 
-                                    <!-- Время 2 -->
                                     <Label x:Name="Time2" Content="Время 2" Margin="5" Grid.Column="2"/>
                                     <TextBox x:Name="Time2TextBox" Margin="5" Grid.Column="3" 
              IsReadOnly="True" Style="{StaticResource ModernTextBox}"/>
@@ -343,9 +351,8 @@
                                         </Style>
                                     </DataGrid.Resources>
                                     <DataGrid.Columns>
-                                        <!-- Строка 1 - с динамической шириной и переносом -->
                                         <DataGridTextColumn Header="Строка 1" Binding="{Binding LineText1}" 
-                        Width="*" MinWidth="150">
+                        Width="*" MinWidth="120">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="TextWrapping" Value="Wrap"/>
@@ -354,9 +361,8 @@
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
 
-                                        <!-- Строка 2 - с динамической шириной и переносом -->
                                         <DataGridTextColumn Header="Строка 2" Binding="{Binding LineText2}" 
-                        Width="*" MinWidth="150">
+                        Width="*" MinWidth="120">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="TextWrapping" Value="Wrap"/>
@@ -365,16 +371,14 @@
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
 
-                                        <!-- Результат - фиксированная ширина -->
                                         <DataGridTextColumn Header="Результат" Binding="{Binding Result}" 
-                        Width="65" MinWidth="75" MaxWidth="100"/>
+                        Width="65" MinWidth="60" MaxWidth="80"/>
 
-                                        <!-- Кнопка копирования - фиксированная ширина -->
                                         <DataGridTemplateColumn Header="Копировать" 
-                            Width="100" MinWidth="75" MaxWidth="100">
+                            Width="80" MinWidth="60" MaxWidth="80">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Button Content="⎘ Копировать" 
+                                                    <Button Content="⎘" 
                         FontFamily="Segoe UI Symbol"
                         ToolTip="Копировать строку"
                         Click="CopyRowButton_Click"
@@ -390,7 +394,6 @@
                         </TabItem>
                     </TabControl>
 
-                    <!-- Общие кнопки для обеих вкладок -->
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,5">
                         <Button Content="⎘ Копировать всё" 
                     FontFamily="Segoe UI"
@@ -413,7 +416,7 @@
                 </Grid>
             </Border>
 
-            <StatusBar Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5">
+            <StatusBar Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="7">
                 <StatusBarItem>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <ProgressBar x:Name="StatusProgressBar" 
