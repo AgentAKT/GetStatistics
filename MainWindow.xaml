@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GetStatistics"
         mc:Ignorable="d"
         Title="Log Navigator"
         Height="800"
@@ -13,7 +14,10 @@
         Icon="/Assets/log_navigator_logo.png">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
     </Window.Resources>
+    
+
 
     <DockPanel Background="{StaticResource LightBackground}">
         <Menu DockPanel.Dock="Top">
@@ -137,8 +141,10 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Grid>
+
+                    <Grid Grid.Row="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="20"/>
                             <ColumnDefinition Width="*"/>
@@ -146,14 +152,99 @@
                         <Ellipse Width="10" Height="10" Grid.Column="0" Fill="Yellow" Stroke="Gray" DockPanel.Dock="Left" Margin="0,0,5,0"/>
                         <Label Content="Левый фильтр " Grid.Column="1" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
                     </Grid>
-                    <ComboBox x:Name="StringComboBox_One_Left" Grid.Row="1" Style="{StaticResource ModernComboBox}" SelectionChanged="StringOneComboBox_SelectionChanged" ToolTip="Выберите первый критерий фильтрации"/>
-                    <ComboBox x:Name="StringComboBox_Two_Left" Grid.Row="2" Style="{StaticResource ModernComboBox}" SelectionChanged="StringTwoComboBox_SelectionChanged" ToolTip="Выберите второй критерий фильтрации"/>
-                    <TextBox x:Name="SearchTextBoxLog_One_Left" Grid.Row="3" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_One_Left_KeyDown" TextChanged="SearchTextBoxLog_One_Left_TextChanged" ToolTip="Введите текст для поиска"/>
-                    <TextBox x:Name="SearchTextBoxLog_Two_Left" Grid.Row="4" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_Two_Left_KeyDown" TextChanged="SearchTextBoxLog_Two_Left_TextChanged" ToolTip="Введите текст для поиска" Margin="5,0,5,0"/>
 
-                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
-                        <Button x:Name="SearchInFile_LeftButton" Margin="1,1,5,1" Content="Найти" Width="80" Click="StartSearchInFilesButton_Left_Click" ToolTip="Поиск по левому фильтру" Style="{StaticResource ModernButton}"/>
-                        <Button x:Name="ClearButton_Left" Margin="1,1,5,1" Content="Очистить" Width="80" Click="ClearButton_Left_Click" ToolTip="Очистить левый фильтр" Style="{StaticResource ModernButton}"/>
+                    <!-- String1 Left -->
+                    <StackPanel Grid.Row="1" Orientation="Vertical" Margin="5,0,5,0">
+                        <Grid>
+                            <TextBox x:Name="StringComboBox_One_Left" 
+                 Text="{Binding ConfigSearch.String1LeftSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="0,0,0,5" 
+                 Padding="5" 
+                 FontSize="14"
+                 VerticalContentAlignment="Center"
+                 ToolTip="Введите текст для поиска в String1 (левый)"/>
+
+                            <Button Content="+" 
+                Width="30"
+                Height="30"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Margin="0,0,5,0"
+                ToolTip="Добавить в конфиг"
+                Command="{Binding AddString1LeftCommand}"
+                CommandParameter="{Binding ConfigSearch.String1LeftSearchText}"
+                Style="{StaticResource ModernButton}"/>
+                        </Grid>
+
+                        <ListBox ItemsSource="{Binding ConfigSearch.FilteredString1LeftItems}"
+             SelectedItem="{Binding ConfigSearch.SelectedString1Left, Mode=TwoWay}"
+             MaxHeight="150" 
+             Width="{Binding ActualWidth, ElementName=StringComboBox_One_Left}"
+             Margin="0,-5,0,0"
+             Visibility="{Binding ConfigSearch.String1LeftSearchText, Converter={StaticResource StringToVisibilityConverter}}"
+             Style="{StaticResource DropdownListBoxStyle}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Margin="5" TextWrapping="Wrap"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+
+                    <!-- String2 Left -->
+                    <StackPanel Grid.Row="2" Orientation="Vertical" Margin="5,0,5,0">
+                        <Grid>
+                            <TextBox x:Name="StringComboBox_Two_Left" 
+                 Text="{Binding ConfigSearch.String2LeftSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="0,0,0,5" 
+                 Padding="5" 
+                 FontSize="14"
+                 VerticalContentAlignment="Center"
+                 ToolTip="Введите текст для поиска в String2 (левый)"/>
+
+                            <Button Content="+" 
+                Width="30"
+                Height="30"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Margin="0,0,5,0"
+                ToolTip="Добавить в конфиг"
+                Command="{Binding AddString2LeftCommand}"
+                CommandParameter="{Binding ConfigSearch.String2LeftSearchText}"
+                Style="{StaticResource ModernButton}"/>
+                        </Grid>
+
+                        <ListBox ItemsSource="{Binding ConfigSearch.FilteredString2LeftItems}"
+             SelectedItem="{Binding ConfigSearch.SelectedString2Left, Mode=TwoWay}"
+             MaxHeight="150" 
+             Width="{Binding ActualWidth, ElementName=StringComboBox_Two_Left}"
+             Margin="0,-5,0,0"
+             Visibility="{Binding ConfigSearch.String2LeftSearchText, Converter={StaticResource StringToVisibilityConverter}}"
+             Style="{StaticResource DropdownListBoxStyle}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Margin="5" TextWrapping="Wrap"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+
+                    <TextBox x:Name="SearchTextBoxLog_One_Left" Grid.Row="3" Style="{StaticResource ModernTextBox}" 
+                             KeyDown="SearchTextBoxLog_One_Left_KeyDown" 
+                             TextChanged="SearchTextBoxLog_One_Left_TextChanged" 
+                             ToolTip="Введите текст для поиска"/>
+
+                    <TextBox x:Name="SearchTextBoxLog_Two_Left" Grid.Row="4" Style="{StaticResource ModernTextBox}" 
+                             KeyDown="SearchTextBoxLog_Two_Left_KeyDown" 
+                             TextChanged="SearchTextBoxLog_Two_Left_TextChanged" 
+                             ToolTip="Введите текст для поиска" 
+                             Margin="5,0,5,0"/>
+
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0">
+                        <Button x:Name="SearchInFile_LeftButton" Margin="1,1,5,1" Content="Найти" Width="80" 
+                                Click="StartSearchInFilesButton_Left_Click" ToolTip="Поиск по левому фильтру" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="ClearButton_Left" Margin="1,1,5,1" Content="Очистить" Width="80" 
+                                Click="ClearButton_Left_Click" ToolTip="Очистить левый фильтр" Style="{StaticResource ModernButton}"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -169,7 +260,7 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <CheckBox x:Name="Unical_CheckBox" Content="Уникальные" Grid.Column="0" Style="{StaticResource ModernCheckBox}" VerticalAlignment="Center" 
+                    <CheckBox x:Name="Unical_CheckBox" Content="Уникальные" Grid.Column="0" Style="{StaticResource ButtonLikeCheckBox}" VerticalAlignment="Center" 
                               Checked="Unical_CheckBox_Checked" Unchecked="Unical_CheckBox_Unchecked"/>
                     <CheckBox x:Name="CalculatorMode_CheckBox" 
                                   Content="Режим калькулятора"
@@ -204,8 +295,10 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Grid>
+
+                    <Grid Grid.Row="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="20"/>
                             <ColumnDefinition Width="*"/>
@@ -213,14 +306,105 @@
                         <Ellipse Width="10" Height="10" Grid.Column="0" Fill="LightBlue" Stroke="Gray" DockPanel.Dock="Left" Margin="0,0,5,0"/>
                         <Label Content="Правый фильтр " Grid.Column="1" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,4"/>
                     </Grid>
-                    <ComboBox x:Name="StringComboBox_One_Right" Grid.Row="1" Style="{StaticResource ModernComboBox}" SelectionChanged="StringOneComboBox_SelectionChanged" ToolTip="Выберите первый критерий фильтрации"/>
-                    <ComboBox x:Name="StringComboBox_Two_Right" Grid.Row="2" Style="{StaticResource ModernComboBox}" SelectionChanged="StringTwoComboBox_SelectionChanged" ToolTip="Выберите второй критерий фильтрации"/>
-                    <TextBox x:Name="SearchTextBoxLog_One_Right" Grid.Row="3" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_One_Right_KeyDown" TextChanged="SearchTextBoxLog_One_Right_TextChanged" ToolTip="Введите текст для поиска"/>
-                    <TextBox x:Name="SearchTextBoxLog_Two_Right" Grid.Row="4" Style="{StaticResource ModernTextBox}" KeyDown="SearchTextBoxLog_Two_Right_KeyDown" TextChanged="SearchTextBoxLog_Two_Right_TextChanged" ToolTip="Введите текст для поиска" Margin="5,0,5,0"/>
 
-                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
-                        <Button x:Name="SearchInFile_RightButton" Content="Найти" Margin="1,1,5,1" Width="80" Click="StartSearchInFilesButton_Right_Click" ToolTip="Поиск по правому фильтру" Style="{StaticResource ModernButton}"/>
-                        <Button x:Name="ClearButton_Right" Content="Очистить" Margin="1,1,5,1" Width="80" Click="ClearButton_Right_Click" ToolTip="Очистить правый фильтр" Style="{StaticResource ModernButton}"/>
+                    <!-- String1 Right -->
+                    <StackPanel Grid.Row="1" Orientation="Vertical" Margin="5,0,5,0">
+                        <Grid>
+                            <TextBox x:Name="StringComboBox_One_Right" 
+                 Text="{Binding ConfigSearch.String1RightSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="0,0,30,0" 
+                 Padding="5" 
+                 FontSize="14"
+                 VerticalContentAlignment="Center"
+                 ToolTip="Введите текст для поиска в String1 (правый)"/>
+
+                            <Button Content="+" 
+                Width="25"
+                Height="25"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Margin="0,0,5,0"
+                ToolTip="Добавить в конфиг"
+                Command="{Binding AddString1RightCommand}"
+                CommandParameter="{Binding ConfigSearch.String1RightSearchText}"
+                Style="{StaticResource ModernButton}"/>
+                        </Grid>
+
+                        <ListBox ItemsSource="{Binding ConfigSearch.FilteredString1RightItems}"
+             SelectedItem="{Binding ConfigSearch.SelectedString1Right, Mode=TwoWay}"
+             MaxHeight="150" 
+             Width="{Binding ActualWidth, ElementName=StringComboBox_One_Right}"
+             Margin="0,2,0,0"
+             Visibility="{Binding ConfigSearch.String1RightSearchText, Converter={StaticResource StringToVisibilityConverter}}"
+             Style="{StaticResource DropdownListBoxStyle}">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource DropdownListBoxItemStyle}"/>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Margin="8,4" TextWrapping="Wrap"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+
+                    <!-- String2 Right -->
+                    <StackPanel Grid.Row="2" Orientation="Vertical" Margin="5,0,5,0">
+                        <Grid>
+                            <TextBox x:Name="StringComboBox_Two_Right" 
+                 Text="{Binding ConfigSearch.String2RightSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="0,0,30,0" 
+                 Padding="5" 
+                 FontSize="14"
+                 VerticalContentAlignment="Center"
+                 ToolTip="Введите текст для поиска в String2 (правый)"/>
+
+                            <Button Content="+" 
+                Width="25"
+                Height="25"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Margin="0,0,5,0"
+                ToolTip="Добавить в конфиг"
+                Command="{Binding AddString2RightCommand}"
+                CommandParameter="{Binding ConfigSearch.String2RightSearchText}"
+                Style="{StaticResource ModernButton}"/>
+                        </Grid>
+
+                        <ListBox ItemsSource="{Binding ConfigSearch.FilteredString2RightItems}"
+             SelectedItem="{Binding ConfigSearch.SelectedString2Right, Mode=TwoWay}"
+             MaxHeight="150" 
+             Width="{Binding ActualWidth, ElementName=StringComboBox_Two_Right}"
+             Margin="0,2,0,0"
+             Visibility="{Binding ConfigSearch.String2RightSearchText, Converter={StaticResource StringToVisibilityConverter}}"
+             Style="{StaticResource DropdownListBoxStyle}">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource DropdownListBoxItemStyle}"/>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Margin="8,4" TextWrapping="Wrap"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+
+                    <TextBox x:Name="SearchTextBoxLog_One_Right" Grid.Row="3" Style="{StaticResource ModernTextBox}" 
+                             KeyDown="SearchTextBoxLog_One_Right_KeyDown" 
+                             TextChanged="SearchTextBoxLog_One_Right_TextChanged" 
+                             ToolTip="Введите текст для поиска"/>
+
+                    <TextBox x:Name="SearchTextBoxLog_Two_Right" Grid.Row="4" Style="{StaticResource ModernTextBox}" 
+                             KeyDown="SearchTextBoxLog_Two_Right_KeyDown" 
+                             TextChanged="SearchTextBoxLog_Two_Right_TextChanged" 
+                             ToolTip="Введите текст для поиска" 
+                             Margin="5,0,5,0"/>
+
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0">
+                        <Button x:Name="SearchInFile_RightButton" Content="Найти" Margin="1,1,5,1" Width="80" 
+                                Click="StartSearchInFilesButton_Right_Click" ToolTip="Поиск по правому фильтру" Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="ClearButton_Right" Content="Очистить" Margin="1,1,5,1" Width="80" 
+                                Click="ClearButton_Right_Click" ToolTip="Очистить правый фильтр" Style="{StaticResource ModernButton}"/>
                     </StackPanel>
                 </Grid>
             </Border>

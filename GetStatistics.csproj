@@ -156,6 +156,7 @@
     <Compile Include="LogFileService.cs" />
     <Compile Include="PathCombine.cs" />
     <Compile Include="QuoteManager.cs" />
+    <Compile Include="RelayCommand.cs" />
     <Compile Include="RemoteFileAccess.cs" />
     <Compile Include="ServerConfig.cs" />
     <Compile Include="Services\ConfigService.cs" />
@@ -169,6 +170,8 @@
     <Compile Include="SSHConnectionWindow.xaml.cs">
       <DependentUpon>SSHConnectionWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="StringToVisibilityConverter.cs" />
+    <Compile Include="ViewModel.cs" />
     <Compile Include="WorkWithCounters.cs" />
     <Page Include="InputDialog.xaml">
       <SubType>Designer</SubType>

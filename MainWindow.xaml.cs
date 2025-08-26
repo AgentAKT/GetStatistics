@@ -61,11 +61,52 @@ namespace GetStatistics
         private readonly ConfigService _configService;
         public bool IsSSHConnected => _sshClient?.IsConnected == true;
         public bool IsLocal => _sshClient == null || !_sshClient.IsConnected;
+        private ConfigSearchViewModel _configSearchVM;
+
+        public ConfigSearchViewModel ConfigSearch => _configSearchVM;
+        public ICommand AddString1LeftCommand => new RelayCommand(AddString1Left);
+        public ICommand AddString2LeftCommand => new RelayCommand(AddString2Left);
+        public ICommand AddString1RightCommand => new RelayCommand(AddString1Right);
+        public ICommand AddString2RightCommand => new RelayCommand(AddString2Right);
+
+        private void AddString1Left(object parameter)
+        {
+            if (parameter is string newItem)
+            {
+                _configSearchVM.AddString1Item(newItem, isLeftSide: true);
+            }
+        }
+
+        private void AddString2Left(object parameter)
+        {
+            if (parameter is string newItem)
+            {
+                _configSearchVM.AddString2Item(newItem, isLeftSide: true);
+            }
+        }
+
+        private void AddString1Right(object parameter)
+        {
+            if (parameter is string newItem)
+            {
+                _configSearchVM.AddString1Item(newItem, isLeftSide: false);
+            }
+        }
+
+        private void AddString2Right(object parameter)
+        {
+            if (parameter is string newItem)
+            {
+                _configSearchVM.AddString2Item(newItem, isLeftSide: false);
+            }
+        }
 
 
         public MainWindow()
         {
             InitializeComponent();
+            _configSearchVM = new ConfigSearchViewModel();
+            this.DataContext = this;
             _configService = new ConfigService();
             this.DataContext = this;
             _configLoader = new ConfigLoader(
@@ -84,15 +125,15 @@ namespace GetStatistics
                 StatusText,
                 () => new FilterParameters
                 {
-                    Filter_One = StringComboBox_One_Left.SelectedItem?.ToString(),
-                    Filter_Two = StringComboBox_Two_Left.SelectedItem?.ToString(),
+                    Filter_One = StringComboBox_One_Left.Text?.ToString(),
+                    Filter_Two = StringComboBox_Two_Left.Text?.ToString(),
                     SearchText_One = SearchTextBoxLog_One_Left.Text,
                     SearchText_Two = SearchTextBoxLog_Two_Left.Text
                 },
                 () => new FilterParameters
                 {
-                    Filter_One = StringComboBox_One_Right.SelectedItem?.ToString(),
-                    Filter_Two = StringComboBox_Two_Right.SelectedItem?.ToString(),
+                    Filter_One = StringComboBox_One_Right.Text?.ToString(),
+                    Filter_Two = StringComboBox_Two_Right.Text?.ToString(),
                     SearchText_One = SearchTextBoxLog_One_Right.Text,
                     SearchText_Two = SearchTextBoxLog_Two_Right.Text
                 },
@@ -1319,8 +1360,8 @@ namespace GetStatistics
                 // Получаем параметры левого фильтра
                 var leftFilterParams = new FilterParameters
                 {
-                    Filter_One = StringComboBox_One_Left.SelectedItem?.ToString(),
-                    Filter_Two = StringComboBox_Two_Left.SelectedItem?.ToString(),
+                    Filter_One = ConfigSearch.String1LeftSearchText?.ToString(),
+                    Filter_Two = ConfigSearch.String2LeftSearchText?.ToString(),
                     SearchText_One = SearchTextBoxLog_One_Left.Text,
                     SearchText_Two = SearchTextBoxLog_Two_Left.Text
                 };
@@ -1592,5 +1633,26 @@ namespace GetStatistics
                 MessageBox.Show("Файл не найден");
             }
         }
+        private void AddString1(object parameter)
+        {
+            if (parameter is string newItem)
+            {
+                _configSearchVM.AddString1Item(newItem);
+            }
+        }
+
+        private void AddString2(object parameter)
+        {
+            if (parameter is string newItem)
+            {
+                _configSearchVM.AddString2Item(newItem);
+            }
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
+
 }
