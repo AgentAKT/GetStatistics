@@ -70,12 +70,7 @@
     <Reference Include="RdpConnection, Version=0.5.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\RdpConnection.0.5.0\lib\netstandard2.0\RdpConnection.dll</HintPath>
     </Reference>
-    <Reference Include="Renci.SshNet, Version=2016.1.0.0, Culture=neutral, PublicKeyToken=1cee9f8bde3db106, processorArchitecture=MSIL">
-      <HintPath>packages\SSH.NET.2016.1.0\lib\net40\Renci.SshNet.dll</HintPath>
-    </Reference>
-    <Reference Include="Renci.SshNet.Async, Version=1.4.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Renci.SshNet.Async.1.4.0\lib\net40\Renci.SshNet.Async.dll</HintPath>
-    </Reference>
+   <PackageReference Include="SSH.NET" Version="2020.0.2" />
     <Reference Include="SharpCompress, Version=0.40.0.0, Culture=neutral, PublicKeyToken=afb0a02973931d96, processorArchitecture=MSIL">
       <HintPath>packages\SharpCompress.0.40.0\lib\net48\SharpCompress.dll</HintPath>
     </Reference>
