@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="SSH Подключения"
-        Height="500"
-        Width="600"
+        Height="572"
+        Width="657"
         MinWidth="500"
         MinHeight="400"
         WindowStartupLocation="CenterOwner"
@@ -29,10 +29,11 @@
     <DockPanel>
         <!-- Кнопки управления внизу окна -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
-            <Button x:Name="btnTestConnection" Content="Проверить" Width="100" Margin="5" Click="TestConnection_Click" Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnAddNew" Content="Новое подключение" Click="AddNew_Click" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
             <Button x:Name="btnConnect" Content="Подключиться" Width="100" Margin="5" Click="Connect_Click" Style="{StaticResource ModernButton}"/>
-            <Button x:Name="btnSave" Content="Сохранить" Width="100" Margin="5" Click="Save_Click" Style="{StaticResource ModernButton}"/>
-            <Button x:Name="btnCancel" Content="Отмена" Width="100" Margin="5" Click="Cancel_Click" Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnDuplicate" Content="Дублировать" Width="100" Margin="5" Click="Duplicate_Click" Style="{StaticResource ModernButton}" IsEnabled="False"/>
+            <Button x:Name="btnSave" Content="Сохранить" Width="80" Margin="5" Click="Save_Click" Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnCancel" Content="Отмена" Width="80" Margin="5" Click="Cancel_Click" Style="{StaticResource ModernButton}"/>
         </StackPanel>
 
         <!-- Основное содержимое -->
@@ -96,6 +97,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
                                             <Button x:Name="btnEdit" Content="✏️" ToolTip="Редактировать" Click="EditConnection_Click" Style="{StaticResource ModernButton}" Margin="2" Padding="5,2"/>
+                                            <Button x:Name="btnDuplicateItem" Content="⎘" ToolTip="Дублировать" Click="Duplicate_Click" Style="{StaticResource ModernButton}" Margin="2" Padding="5,2"/>
                                             <Button x:Name="btnDelete" Content="🗑️" ToolTip="Удалить" Click="DeleteConnection_Click" Style="{StaticResource ModernButton}" Margin="2" Padding="5,2"/>
                                         </StackPanel>
                                     </DataTemplate>
@@ -104,9 +106,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0">
-                        <Button x:Name="btnAddNew" Content="Добавить новое" Click="AddNew_Click" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
-                    </StackPanel>
+                    
                 </Grid>
             </GroupBox>
         </Grid>

@@ -70,7 +70,7 @@
     <Reference Include="RdpConnection, Version=0.5.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\RdpConnection.0.5.0\lib\netstandard2.0\RdpConnection.dll</HintPath>
     </Reference>
-   <PackageReference Include="SSH.NET" Version="2020.0.2" />
+    <PackageReference Include="SSH.NET" Version="2020.0.2" />
     <Reference Include="SharpCompress, Version=0.40.0.0, Culture=neutral, PublicKeyToken=afb0a02973931d96, processorArchitecture=MSIL">
       <HintPath>packages\SharpCompress.0.40.0\lib\net48\SharpCompress.dll</HintPath>
     </Reference>
@@ -142,7 +142,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="ConfigService.cs" />
     <Compile Include="FilterFiles.cs" />
     <Compile Include="FilterLogFile.cs" />
     <Compile Include="ConfigLoader.cs" />
@@ -150,6 +149,7 @@
     <Compile Include="InputDialog.xaml.cs">
       <DependentUpon>InputDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Models\AppConfig.cs" />
     <Compile Include="Models\FilterParameters.cs" />
     <Compile Include="Models\SharedFolder.cs" />
     <Compile Include="NetworkConnection.cs" />
@@ -158,6 +158,7 @@
     <Compile Include="QuoteManager.cs" />
     <Compile Include="RemoteFileAccess.cs" />
     <Compile Include="ServerConfig.cs" />
+    <Compile Include="Services\ConfigService.cs" />
     <Compile Include="Services\SharedFoldersService.cs" />
     <Compile Include="SharedFolderEditDialog.xaml.cs">
       <DependentUpon>SharedFolderEditDialog.xaml</DependentUpon>
@@ -227,6 +228,9 @@
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="ssh_connections.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>

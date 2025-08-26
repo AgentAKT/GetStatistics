@@ -58,11 +58,13 @@ namespace GetStatistics
         public string ArchivesCountText { get; set; }
         public Visibility ArchivesPanelVisibility { get; set; } = Visibility.Collapsed;
         private string _lastOpenedLocalFolder;
+        private readonly ConfigService _configService;
 
 
         public MainWindow()
         {
             InitializeComponent();
+            _configService = new ConfigService();
             this.DataContext = this;
             _configLoader = new ConfigLoader(
                 StringComboBox_One_Left,
@@ -1289,10 +1291,8 @@ namespace GetStatistics
 
         private void OpenSSHConnectionWindow_Click(object sender, RoutedEventArgs e)
         {
-            var sshWindow = new SSHConnectionWindow
-            {
-                Owner = this 
-            };
+            var sshWindow = new SSHConnectionWindow();
+            sshWindow.Owner = this;
             sshWindow.ShowDialog();
         }
 

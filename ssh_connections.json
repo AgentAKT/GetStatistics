@@ -1,18 +1,20 @@
-[
-  {
-    "Name": "UAT.ZES.SCADA1",
-    "Host": "10.81.169.53",
-    "Port": 22,
-    "Username": "administrator",
-    "Password": "P@ssw0rd",
-    "Path": "/var/log/CK-11"
-  },
-  {
-    "Name": "UAT.ZES.SCADA2",
-    "Host": "10.81.169.54",
-    "Port": 22,
-    "Username": "administrator",
-    "Password": "P@ssw0rd",
-    "Path": "/var/log/CK-11"
-  }
-]
+{
+  "SshConnections": [
+    {
+      "Name": "UAT.ZES.SCADA1",
+      "Host": "10.81.169.53",
+      "Port": 22,
+      "Username": "administrator",
+      "Password": "P@ssw0rd",
+      "Path": "/var/log/CK-11"
+    },
+    {
+      "Name": "UAT.ZES.SCADA2",
+      "Host": "10.81.169.54",
+      "Port": 22,
+      "Username": "administrator",
+      "Password": "P@ssw0rd",
+      "Path": "/var/log/CK-11"
+    }
+  ]
+}
