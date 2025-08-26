@@ -11,7 +11,9 @@
         MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Icon="/Assets/log_navigator_logo.png">
-
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Window.Resources>
 
 
     <DockPanel Background="{StaticResource LightBackground}">
@@ -95,9 +97,20 @@
               Unchecked="TodayCheckBox_Unchecked"
               Margin="8,0,0,0"/>
                     </Grid>
-
+                    
                     <!-- Список логов -->
-                    <ListBox x:Name="LogList" Grid.Row="3" Style="{StaticResource ModernListBox}" SelectionChanged="LogList_SelectionChanged"/>
+                    <ListBox x:Name="LogList"  Grid.Row="3" Style="{StaticResource ModernListBox}" SelectionChanged="LogList_SelectionChanged">
+                        <ListBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Сохранить на локальный компьютер" Style="{StaticResource ModernMenuItem}"
+                                Click="SaveFileToLocal_Click"
+                                Visibility="{Binding IsSSHConnected, Converter={StaticResource BoolToVisibilityConverter}}"/> 
+                                <MenuItem Header="Открыть в проводнике" Style="{StaticResource ModernMenuItem}"
+                                Click="OpenInExplorer_Click"
+                                Visibility="{Binding IsLocal, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
+                    </ListBox>
 
                     <!-- Панель архивов -->
                     <StackPanel x:Name="ArchivesPanel" Grid.Row="4" Orientation="Horizontal" Margin="5" Visibility="Collapsed">

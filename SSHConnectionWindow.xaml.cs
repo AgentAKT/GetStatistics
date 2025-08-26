@@ -53,9 +53,9 @@ namespace GetStatistics
             txtConnectionName.Text = "";
             txtHost.Text = "";
             txtPort.Text = "22";
-            txtUsername.Text = "";
+            txtUsername.Text = "administrator";
             txtPassword.Password = "";
-            txtPath.Text = "";
+            txtPath.Text = "/var/log/CK-11";
             dgConnections.SelectedItem = null;
             btnSave.Content = "Сохранить";
             btnDuplicate.IsEnabled = false;

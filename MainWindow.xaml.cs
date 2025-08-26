@@ -59,6 +59,8 @@ namespace GetStatistics
         public Visibility ArchivesPanelVisibility { get; set; } = Visibility.Collapsed;
         private string _lastOpenedLocalFolder;
         private readonly ConfigService _configService;
+        public bool IsSSHConnected => _sshClient?.IsConnected == true;
+        public bool IsLocal => _sshClient == null || !_sshClient.IsConnected;
 
 
         public MainWindow()
@@ -1510,6 +1512,84 @@ namespace GetStatistics
                     MessageBox.Show($"Не удалось открыть редактор: {ex.Message}", "Ошибка",
                                   MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+            }
+        }
+
+        private async void SaveFileToLocal_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(LogList.SelectedItem is string selectedFileName) || _sshClient == null || !_sshClient.IsConnected)
+                return;
+
+            try
+            {
+                // Находим полный путь к файлу на сервере
+                var fullServerPath = _logFiles.FirstOrDefault(f =>
+                    Path.GetFileName(f).Equals(selectedFileName, StringComparison.OrdinalIgnoreCase));
+
+                if (string.IsNullOrEmpty(fullServerPath))
+                {
+                    MessageBox.Show("Файл не найден на сервере");
+                    return;
+                }
+
+                // Диалог для выбора места сохранения
+                var saveDialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    FileName = selectedFileName,
+                    Filter = "Все файлы|*.*",
+                    Title = "Сохранить файл на локальный компьютер"
+                };
+
+                if (saveDialog.ShowDialog() == true)
+                {
+                    StatusText.Text = "Скачивание файла...";
+
+                    // Скачиваем файл через SCP
+                    await DownloadFileViaScp(fullServerPath, saveDialog.FileName);
+
+                    StatusText.Text = $"Файл сохранен: {saveDialog.FileName}";
+                    MessageBox.Show($"Файл успешно сохранен:\n{saveDialog.FileName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при сохранении файла: {ex.Message}");
+            }
+        }
+
+        private async Task DownloadFileViaScp(string remoteFilePath, string localFilePath)
+        {
+            using (var scpClient = new ScpClient(_sshClient.ConnectionInfo))
+            {
+                await Task.Run(() => scpClient.Connect());
+
+                if (scpClient.IsConnected)
+                {
+                    // Скачиваем файл
+                    await Task.Run(() => scpClient.Download(remoteFilePath, new FileInfo(localFilePath)));
+                }
+                else
+                {
+                    throw new Exception("Не удалось подключиться для скачивания файла");
+                }
+            }
+        }
+
+        private void OpenInExplorer_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(LogList.SelectedItem is string selectedFileName))
+                return;
+
+            var fullPath = Path.Combine(_currentLogFolderPath, selectedFileName);
+
+            if (File.Exists(fullPath))
+            {
+                // Открываем папку и выделяем файл в проводнике
+                Process.Start("explorer.exe", $"/select,\"{fullPath}\"");
+            }
+            else
+            {
+                MessageBox.Show("Файл не найден");
             }
         }
     }
