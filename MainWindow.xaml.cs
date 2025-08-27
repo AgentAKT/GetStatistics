@@ -1376,8 +1376,8 @@ namespace GetStatistics
 
                     // Копируем конфиг в буфер обмена
                     Clipboard.SetText(configText);
-                    MessageBox.Show("Конфиг скопирован в буфер обмена!", "Успех",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    //MessageBox.Show("Конфиг скопирован в буфер обмена!", "Успех",
+                    //    MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
@@ -1406,7 +1406,7 @@ namespace GetStatistics
                 try
                 {
                     Clipboard.SetText(excelData.ToString());
-                    MessageBox.Show("Данные скопированы!");
+                    //MessageBox.Show("Данные скопированы!");
                 }
                 catch (Exception ex)
                 {
