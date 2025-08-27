@@ -1293,10 +1293,19 @@ namespace GetStatistics
                 Style = (Style)FindResource("ModernButton")
             };
 
-            // Создаем кнопку "Копировать статистику"
+            // Создаем кнопку "Результат"
             Button copyResultButton = new Button
             {
                 Content = "в Excel",
+                Margin = new Thickness(5),
+                Padding = new Thickness(8, 2, 8, 2),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Style = (Style)FindResource("ModernButton")
+            };
+
+            Button copyValuesButton = new Button
+            {
+                Content = "Значения",
                 Margin = new Thickness(5),
                 Padding = new Thickness(8, 2, 8, 2),
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -1316,8 +1325,8 @@ namespace GetStatistics
                 try
                 {
                     Clipboard.SetText(fullText);
-                    MessageBox.Show("Статистика скопирована в буфер обмена!", "Успех",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    //MessageBox.Show("Статистика скопирована в буфер обмена!", "Успех",
+                        //MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
@@ -1377,7 +1386,7 @@ namespace GetStatistics
                 }
             };
 
-            // Обработчик нажатия на кнопку "Копировать в конфиг"
+            // Обработчик нажатия на кнопку "Excel"
             copyResultButton.Click += (s, args) =>
             {
                 StringBuilder excelData = new StringBuilder();
@@ -1405,6 +1414,34 @@ namespace GetStatistics
                 }
             };
 
+            // Обработчик нажатия на кнопку "Значения"
+            copyValuesButton.Click += (s, args) =>
+            {
+                StringBuilder excelData = new StringBuilder();
+
+                // Добавляем заголовки (опционально)
+                excelData.AppendLine("Количество");
+
+                for (int hour = 0; hour < 24; hour++)
+                {
+                    int count = hourlyStats[hour];
+                    string hourStr = hour.ToString("00");
+
+                    // Используем табуляцию как разделитель
+                    excelData.AppendLine($"{count}");
+                }
+
+                try
+                {
+                    Clipboard.SetText(excelData.ToString());
+                    //MessageBox.Show("Данные скопированы!");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка: {ex.Message}");
+                }
+            };
+
             // Создаем контейнер для кнопок
             StackPanel buttonPanel = new StackPanel
             {
@@ -1416,6 +1453,7 @@ namespace GetStatistics
             buttonPanel.Children.Add(copyConfigButton);
             buttonPanel.Children.Add(copyButton);
             buttonPanel.Children.Add(copyResultButton);
+            buttonPanel.Children.Add(copyValuesButton);
 
             // Создаем основной контейнер
             StackPanel mainPanel = new StackPanel();
