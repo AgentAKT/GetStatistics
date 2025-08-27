@@ -1334,8 +1334,8 @@ namespace GetStatistics
                     // Генерируем JSON конфиг на основе статистики
                     StringBuilder configBuilder = new StringBuilder();
                     configBuilder.AppendLine("{");
-                    configBuilder.AppendLine("    \"Endpoint\": \"\",");
-                    configBuilder.AppendLine("    \"JsonTemplate\": \"\",");
+                    configBuilder.AppendLine("    \"Endpoint\": \"records/changeRecord\",");
+                    configBuilder.AppendLine("    \"JsonTemplate\": \"CreateNewRecord.json\",");
                     configBuilder.AppendLine("    \"Schedule\": {");
                     configBuilder.AppendLine("        \"Days\": 3,");
                     configBuilder.AppendLine("        \"DefaultRate\": 1,");
