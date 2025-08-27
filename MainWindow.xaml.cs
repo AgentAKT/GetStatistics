@@ -806,7 +806,6 @@ namespace GetStatistics
                 AddLogResultInDataGrid(selectedFolder);
                 if (string.IsNullOrEmpty(selectedFolder))
                 {
-                    MessageBox.Show("Выбор папки отменён.");
                     return;
                 }
             }
@@ -1277,7 +1276,7 @@ namespace GetStatistics
             // Создаем кнопку "Копировать статистику"
             Button copyButton = new Button
             {
-                Content = "Копировать статистику",
+                Content = "Статистика",
                 Margin = new Thickness(5),
                 Padding = new Thickness(8, 2, 8, 2),
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -1287,7 +1286,17 @@ namespace GetStatistics
             // Создаем кнопку "Копировать в конфиг"
             Button copyConfigButton = new Button
             {
-                Content = "Копировать в конфиг",
+                Content = "Конфиг",
+                Margin = new Thickness(5),
+                Padding = new Thickness(8, 2, 8, 2),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Style = (Style)FindResource("ModernButton")
+            };
+
+            // Создаем кнопку "Копировать статистику"
+            Button copyResultButton = new Button
+            {
+                Content = "в Excel",
                 Margin = new Thickness(5),
                 Padding = new Thickness(8, 2, 8, 2),
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -1368,6 +1377,34 @@ namespace GetStatistics
                 }
             };
 
+            // Обработчик нажатия на кнопку "Копировать в конфиг"
+            copyResultButton.Click += (s, args) =>
+            {
+                StringBuilder excelData = new StringBuilder();
+
+                // Добавляем заголовки (опционально)
+                excelData.AppendLine("Время\tКоличество");
+
+                for (int hour = 0; hour < 24; hour++)
+                {
+                    int count = hourlyStats[hour];
+                    string hourStr = hour.ToString("00");
+
+                    // Используем табуляцию как разделитель
+                    excelData.AppendLine($"{hourStr}:00\t{count}");
+                }
+
+                try
+                {
+                    Clipboard.SetText(excelData.ToString());
+                    MessageBox.Show("Данные скопированы!");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка: {ex.Message}");
+                }
+            };
+
             // Создаем контейнер для кнопок
             StackPanel buttonPanel = new StackPanel
             {
@@ -1378,6 +1415,7 @@ namespace GetStatistics
 
             buttonPanel.Children.Add(copyConfigButton);
             buttonPanel.Children.Add(copyButton);
+            buttonPanel.Children.Add(copyResultButton);
 
             // Создаем основной контейнер
             StackPanel mainPanel = new StackPanel();
