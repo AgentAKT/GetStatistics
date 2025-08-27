@@ -1268,10 +1268,13 @@ namespace GetStatistics
             {
                 Document = flowDoc,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                MaxWidth = 350,
+                MaxHeight = 600,
                 Style = (Style)FindResource("ModernFlowDocumentViewer")
             };
 
-            // Создаем кнопку "Копировать"
+            // Создаем кнопку "Копировать статистику"
             Button copyButton = new Button
             {
                 Content = "Копировать статистику",
@@ -1281,7 +1284,17 @@ namespace GetStatistics
                 Style = (Style)FindResource("ModernButton")
             };
 
-            // Обработчик нажатия на кнопку
+            // Создаем кнопку "Копировать в конфиг"
+            Button copyConfigButton = new Button
+            {
+                Content = "Копировать в конфиг",
+                Margin = new Thickness(5),
+                Padding = new Thickness(8, 2, 8, 2),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Style = (Style)FindResource("ModernButton")
+            };
+
+            // Обработчик нажатия на кнопку "Копировать статистику"
             copyButton.Click += (s, args) =>
             {
                 // Получаем весь текст из FlowDocument
@@ -1304,29 +1317,81 @@ namespace GetStatistics
                 }
             };
 
-            // Создаем контейнер с кнопкой и содержимым
-            DockPanel container = new DockPanel
+            // Обработчик нажатия на кнопку "Копировать в конфиг"
+            copyConfigButton.Click += (s, args) =>
             {
-                LastChildFill = true
+                try
+                {
+                    // Генерируем JSON конфиг на основе статистики
+                    StringBuilder configBuilder = new StringBuilder();
+                    configBuilder.AppendLine("{");
+                    configBuilder.AppendLine("    \"Endpoint\": \"records/changeRecord\",");
+                    configBuilder.AppendLine("    \"JsonTemplate\": \"CreateNewRecord.json\",");
+                    configBuilder.AppendLine("    \"Schedule\": {");
+                    configBuilder.AppendLine("        \"Days\": 3,");
+                    configBuilder.AppendLine("        \"DefaultRate\": 1,");
+                    configBuilder.AppendLine("        \"DefaultIntervalMs\": 1000,");
+                    configBuilder.AppendLine("        \"HourlyConfigs\": {");
+
+                    // Добавляем конфигурацию для каждого часа
+                    for (int hour = 0; hour < 24; hour++)
+                    {
+                        int count = hourlyStats[hour];
+
+                        // Форматируем строку для каждого часа
+                        string hourConfig = $"            \"{hour}\": {{\n                \"Count\": {count}\n            }}";
+
+                        // Добавляем запятую для всех элементов, кроме последнего
+                        if (hour < 23)
+                        {
+                            hourConfig += ",";
+                        }
+
+                        configBuilder.AppendLine(hourConfig);
+                    }
+
+                    configBuilder.AppendLine("        }");
+                    configBuilder.AppendLine("    }");
+                    configBuilder.AppendLine("}");
+
+                    string configText = configBuilder.ToString();
+
+                    // Копируем конфиг в буфер обмена
+                    Clipboard.SetText(configText);
+                    MessageBox.Show("Конфиг скопирован в буфер обмена!", "Успех",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка генерации конфига: {ex.Message}", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             };
 
-            // Размещаем кнопку внизу окна
-            DockPanel.SetDock(copyButton, Dock.Bottom);
-            container.Children.Add(copyButton);
-            container.Children.Add(documentViewer);
+            // Создаем контейнер для кнопок
+            StackPanel buttonPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(5)
+            };
 
-            // Создаем окно статистики
+            buttonPanel.Children.Add(copyConfigButton);
+            buttonPanel.Children.Add(copyButton);
+
+            // Создаем основной контейнер
+            StackPanel mainPanel = new StackPanel();
+            mainPanel.Children.Add(documentViewer);
+            mainPanel.Children.Add(buttonPanel);
+
+            // Создаем окно для отображения статистики
             Window statsWindow = new Window
             {
                 Title = "Статистика по часам",
-                Width = 450,
-                Height = 660,
-                MinWidth = 400,
-                MinHeight = 400,
+                Content = mainPanel,
+                SizeToContent = SizeToContent.WidthAndHeight,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = this,
-                Background = (Brush)FindResource("LightBackground"),
-                Content = container  // Используем контейнер с кнопкой и содержимым
+                Owner = Application.Current.MainWindow
             };
 
             statsWindow.Show();
