@@ -1,26 +1,27 @@
-﻿using System;
+﻿using AxMSTSCLib;
+using GetStatistics.Models;
+using LogNavigator;
+using Renci.SshNet;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+//using MS.WindowsAPICodePack.Internal;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using Renci.SshNet;
-using AxMSTSCLib;
-using System.Windows.Documents;
-using System.Text.RegularExpressions;
-using System.Windows.Input;
-using System.Diagnostics;
-using System.Collections.ObjectModel;
 using System.Windows.Controls.Primitives;
-using GetStatistics.Models;
-using static FilterLogFile;
+using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
-using System.Text;
-using LogNavigator;
-using System.IO.Compression;
-using MS.WindowsAPICodePack.Internal;
-using System.Net;
+using static FilterLogFile;
 
 //using SharpCompress.Archives;
 //using SharpCompress.Common;
@@ -68,6 +69,10 @@ namespace GetStatistics
         public ICommand AddString2LeftCommand => new RelayCommand(AddString2Left);
         public ICommand AddString1RightCommand => new RelayCommand(AddString1Right);
         public ICommand AddString2RightCommand => new RelayCommand(AddString2Right);
+        private CancellationTokenSource _searchCancellationTokenSource;
+        private ServerConfig _lastSshConfig;
+        private bool _isCurrentFileSshMode;
+        private bool _isSshMode = false; 
 
         private void AddString1Left(object parameter)
         {
@@ -236,42 +241,41 @@ namespace GetStatistics
         {
             if (!(LogList.SelectedItem is string selectedFileName)) return;
             AddLogResultInDataGrid($"Файл: {selectedFileName}");
+
             try
             {
-                if (_sshClient != null && _sshClient.IsConnected)
+                if (_isSshMode)
                 {
-                    _logFiles = _logFiles.Select(f => f.Replace('\\', '/')).ToList();
-                    // Для SSH используем полный путь из _logFiles
                     _currentLogFilePath = _logFiles.FirstOrDefault(f =>
-                        Path.GetFileName(f).Equals(selectedFileName, StringComparison.OrdinalIgnoreCase));
+                        Path.GetFileName(f.Replace('\\', '/')).Equals(selectedFileName, StringComparison.OrdinalIgnoreCase));
                     if (string.IsNullOrEmpty(_currentLogFilePath))
                     {
-                        MessageBox.Show("Файл не найден на сервере", "Ошибка",
-                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show("Файл не найден на сервере", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;
                     }
-
-                    await _logFileService.LoadLogFile(
-                        _currentLogFilePath,
-                        new ServerConfig { Protocol = "SSH" },
-                        _sshClient
-                    );
                 }
                 else
                 {
-                    // Для локальных файлов
                     _currentLogFilePath = Path.Combine(_currentLogFolderPath, selectedFileName);
-                    await _logFileService.LoadLogFile(
-                        _currentLogFilePath,
-                        new ServerConfig { Protocol = "Local" }
-                    );
                 }
-                StatusText.Text = _currentLogFilePath;
+
+                string content = await ReadLogFileContentAsync(_isSshMode); // ← передаём режим!
+                if (content != null)
+                {
+                    LogRichTextBox.Document.Blocks.Clear();
+                    _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter: true, IsCalculatorMode());
+                    StatusText.Text = _currentLogFilePath;
+                }
+                else
+                {
+                    StatusText.Text = "Файл пуст или не удалось прочитать.";
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка загрузки файла: {ex.Message}", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
+                StatusText.Text = "Ошибка при загрузке файла";
             }
         }
 
@@ -772,6 +776,7 @@ namespace GetStatistics
         {
             _currentLogFolderPath = null;
             _currentLogFilePath = null;
+            _isSshMode = false;
 
             if (_sshClient != null && _sshClient.IsConnected)
             {
@@ -792,6 +797,7 @@ namespace GetStatistics
 
             if (sender == OpenFolderCK11)
             {
+                _isSshMode = false;
                 selectedFolder = @"C:\Program Files\Monitel\CK-11\Client\Log";
                 AddLogResultInDataGrid("Клиентские логи CK-11");
                 if (!Directory.Exists(selectedFolder))
@@ -960,13 +966,15 @@ namespace GetStatistics
 
                 if (_sshClient.IsConnected)
                 {
+                    _lastSshConfig = server;
+                    _isSshMode = true;
                     var command = _sshClient.CreateCommand($"ls {server.Path} | grep -E '\\.log$|\\.txt$'");
                     var result = await Task.Run(() => command.Execute());
 
                     if (command.ExitStatus == 0)
                     {
                         return result.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                                   .Select(file => Path.Combine(server.Path, file))
+                                   .Select(file => $"{server.Path.TrimEnd('/')}/{file.TrimStart('/')}")
                                    .ToList();
                     }
                     throw new Exception($"Ошибка выполнения команды: {command.Error}");
@@ -977,9 +985,32 @@ namespace GetStatistics
             {
                 _sshClient?.Dispose();
                 _sshClient = null;
+                _lastSshConfig = null;
                 StatusText.Text = $"Ошибка SSH: {ex.Message}";
+                _isSshMode = false;
                 throw; // Перебрасываем исключение для обработки в вызывающем коде
             }
+        }
+
+        private bool IsSshDisconnected(Exception ex)
+        {
+            return ex is Renci.SshNet.Common.SshConnectionException ||
+                   ex is System.Net.Sockets.SocketException ||
+                   ex is System.IO.IOException ioEx && (ioEx.Message.Contains("Pipe") || ioEx.Message.Contains("разорвано"));
+        }
+
+        private async Task ReconnectSshAsync()
+        {
+            if (_lastSshConfig == null)
+                throw new InvalidOperationException("Нет сохранённого SSH-конфига для переподключения.");
+
+            UpdateStatusText("Попытка переподключения к SSH...");
+            _sshClient?.Dispose();
+            _sshClient = new SshClient(_lastSshConfig.Host, _lastSshConfig.Username, _lastSshConfig.Password);
+            await Task.Run(() => _sshClient.Connect());
+            if (!_sshClient.IsConnected)
+                throw new Exception("Не удалось восстановить SSH-соединение.");
+            UpdateStatusText("SSH-соединение восстановлено.");
         }
 
         public void UpdateFileList(List<string> files)
@@ -1001,65 +1032,73 @@ namespace GetStatistics
             }
         }
 
-        
+
 
         // Метод для чтения файла через SSH
         private async Task<string> ReadFileViaSsh(string filePath)
         {
-            if (_sshClient == null || !_sshClient.IsConnected)
-                throw new InvalidOperationException("SSH-соединение не установлено.");
-
-            // Убедимся, что путь использует `/` для Linux
-            filePath = filePath.Replace('\\', '/');
-
-            // Выполняем команду `cat` для чтения файла
-            var command = _sshClient.CreateCommand($"cat '{filePath}'");
-            var result = await Task.Factory.FromAsync(command.BeginExecute(), command.EndExecute);
-
-            if (command.ExitStatus != 0)
+            const int maxRetries = 3;
+            for (int attempt = 0; attempt <= maxRetries; attempt++)
             {
-                throw new IOException($"Ошибка чтения файла: {result}");
-            }
+                try
+                {
+                    // Проверяем соединение перед чтением
+                    if (_sshClient == null || !_sshClient.IsConnected)
+                    {
+                        await ReconnectSshAsync();
+                    }
 
-            return result;
+                    filePath = filePath.Replace('\\', '/');
+                    var command = _sshClient.CreateCommand($"cat '{filePath}'");
+                    var result = await Task.Factory.FromAsync(command.BeginExecute(), command.EndExecute);
+                    if (command.ExitStatus != 0)
+                    {
+                        throw new IOException($"Ошибка чтения файла: {result}");
+                    }
+                    return result;
+                }
+                catch (Exception ex) when (IsSshDisconnected(ex) && attempt < maxRetries)
+                {
+                    UpdateStatusText($"Разрыв SSH при чтении '{Path.GetFileName(filePath)}'. Попытка {attempt + 1} из {maxRetries}...");
+                    await Task.Delay(1000 * (attempt + 1)); // задержка 1с, 2с, 3с
+                                                            // Цикл повторит попытку
+                }
+            }
+            throw new Exception($"Не удалось прочитать файл после {maxRetries + 1} попыток.");
         }
 
         // Метод для чтения локального файла (старая логика)
         private async Task<string> ReadLocalFile(string filePath)
         {
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                throw new FileNotFoundException($"Локальный файл не найден: {filePath}");
+            }
             return await Task.Run(() =>
             {
-                using (var fileStream = new FileStream(
-                    filePath,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    FileShare.ReadWrite))
+                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var reader = new StreamReader(fileStream))
                 {
-                    using (var reader = new StreamReader(fileStream))
-                    {
-                        return reader.ReadToEnd();
-                    }
+                    return reader.ReadToEnd();
                 }
             });
         }
 
-        private async Task<string> ReadLogFileContentAsync()
+        private async Task<string> ReadLogFileContentAsync(bool isSshMode)
         {
             if (string.IsNullOrEmpty(_currentLogFilePath))
                 return null;
 
-            if (_sshClient != null && _sshClient.IsConnected)
+            if (isSshMode)
             {
-                // Чтение файла через SSH (для Linux-сервера)
                 return await ReadFileViaSsh(_currentLogFilePath);
             }
             else
             {
-                // Чтение локального файла
-                Console.WriteLine(_currentLogFilePath);
                 return await ReadLocalFile(_currentLogFilePath);
             }
         }
+
         public bool IsCalculatorMode()
         {
             return CalculatorMode_CheckBox?.IsChecked == true;
@@ -1079,19 +1118,15 @@ namespace GetStatistics
         {
             _counterHelper.ClearLeftCounter();
             _counterHelper.ClearMainCounter();
-
             if (_isReadingLogs)
                 return;
-
             _isReadingLogs = true;
-
             try
             {
-                string content = await ReadLogFileContentAsync();
-
+                // 🔥 Используем тот же режим, что и при выборе файла
+                string content = await ReadLogFileContentAsync(_isSshMode);
                 if (content == null)
                     return;
-
                 _logFileService.ApplyLogFilters(content, LogRichTextBox, isLeftFilter, IsCalculatorMode);
             }
             catch (Exception ex)
@@ -1106,7 +1141,6 @@ namespace GetStatistics
                 _isReadingLogs = false;
             }
         }
-
 
         // Очистить левые фильтры
         private void ClearButton_Left_Click(object sender, RoutedEventArgs e)
@@ -1482,23 +1516,46 @@ namespace GetStatistics
 
         private async void SearchInAllFilesButton_Click(object sender, RoutedEventArgs e)
         {
+            // Отмена предыдущей операции, если была
+            _searchCancellationTokenSource?.Cancel();
+            _searchCancellationTokenSource = new CancellationTokenSource();
+            var token = _searchCancellationTokenSource.Token;
 
-            if (_logFiles == null || _logFiles.Count == 0)
+            // Используем только файлы, которые отображаются в списке (уже отфильтрованы)
+            var displayedFileNames = LogList.ItemsSource?.Cast<string>().ToList();
+            if (displayedFileNames == null || !displayedFileNames.Any())
             {
-                MessageBox.Show("Нет файлов для поиска");
+                MessageBox.Show("Нет отфильтрованных файлов для поиска");
+                return;
+            }
+
+            // Преобразуем имена обратно в полные пути
+            var filesToSearch = new List<string>();
+            foreach (var name in displayedFileNames)
+            {
+                var fullPath = _logFiles.FirstOrDefault(f =>
+                    Path.GetFileName(f).Equals(name, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrEmpty(fullPath))
+                    filesToSearch.Add(fullPath);
+            }
+
+            if (!filesToSearch.Any())
+            {
+                MessageBox.Show("Не удалось сопоставить отфильтрованные файлы с путями");
                 return;
             }
 
             try
             {
                 StatusProgressBar.Visibility = Visibility.Visible;
-                StatusProgressBar.IsIndeterminate = true; // Бесконечная анимация
-                StatusText.Text = "Поиск во всех файлах...";
+                StatusProgressBar.IsIndeterminate = true;
+                StatusText.Text = "Поиск во всех отфильтрованных файлах...";
+                CancelSearchButton.Visibility = Visibility.Visible; // Кнопка отмены (см. ниже)
+
                 var results = new StringBuilder();
                 int totalFilesWithMatches = 0;
                 int totalMatches = 0;
 
-                // Получаем параметры левого фильтра
                 var leftFilterParams = new FilterParameters
                 {
                     Filter_One = ConfigSearch.String1LeftSearchText?.ToString(),
@@ -1507,12 +1564,10 @@ namespace GetStatistics
                     SearchText_Two = SearchTextBoxLog_Two_Left.Text
                 };
 
-                // Очищаем RichTextBox перед выводом результатов
                 Dispatcher.Invoke(() => LogRichTextBox.Document.Blocks.Clear());
 
-                // Создаем FlowDocument для форматированного вывода
                 FlowDocument flowDoc = new FlowDocument();
-                Paragraph headerParagraph = new Paragraph(new Run("Результаты поиска во всех файлах:"))
+                Paragraph headerParagraph = new Paragraph(new Run("Результаты поиска во всех отфильтрованных файлах:"))
                 {
                     FontWeight = FontWeights.Bold,
                     FontSize = 14,
@@ -1520,15 +1575,21 @@ namespace GetStatistics
                 };
                 flowDoc.Blocks.Add(headerParagraph);
 
-                // Проходим по всем файлам
-                foreach (var filePath in _logFiles)
+                foreach (var filePath in filesToSearch)
                 {
+                    if (token.IsCancellationRequested)
+                    {
+                        StatusText.Text = "Поиск отменён.";
+                        break;
+                    }
+
+                    string fileName = Path.GetFileName(filePath);
+                    UpdateStatusText($"Читаю: {fileName}");
+
                     try
                     {
                         string content;
-
-                        // Читаем файл в зависимости от типа подключения
-                        if (_sshClient != null && _sshClient.IsConnected)
+                        if (_isSshMode)
                         {
                             content = await ReadFileViaSsh(filePath);
                         }
@@ -1537,11 +1598,9 @@ namespace GetStatistics
                             content = await ReadLocalFile(filePath);
                         }
 
-                        // Разбиваем содержимое на строки
                         var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                         int fileMatchCount = 0;
 
-                        // Проверяем каждую строку на соответствие левому фильтру
                         foreach (var line in lines)
                         {
                             if (_logFileService.MatchesFilter(line, leftFilterParams))
@@ -1552,14 +1611,12 @@ namespace GetStatistics
 
                         if (fileMatchCount > 0)
                         {
-                            string fileName = Path.GetFileName(filePath);
                             Paragraph resultParagraph = new Paragraph();
                             resultParagraph.Inlines.Add(new Run($"{fileName}: ")
                             {
                                 FontWeight = FontWeights.Bold
                             });
                             resultParagraph.Inlines.Add(new Run($"{fileMatchCount} совпадений"));
-
                             flowDoc.Blocks.Add(resultParagraph);
                             totalFilesWithMatches++;
                             totalMatches += fileMatchCount;
@@ -1567,48 +1624,47 @@ namespace GetStatistics
                     }
                     catch (Exception ex)
                     {
-                        Paragraph errorParagraph = new Paragraph(new Run($"Ошибка обработки файла {Path.GetFileName(filePath)}: {ex.Message}"))
+                        Paragraph errorParagraph = new Paragraph(new Run($"Ошибка обработки {fileName}: {ex.Message}"))
                         {
                             Foreground = Brushes.Red
                         };
                         flowDoc.Blocks.Add(errorParagraph);
                     }
-                    
                 }
 
-                // Добавляем итоговую статистику
-                Paragraph summaryParagraph = new Paragraph();
-                summaryParagraph.Inlines.Add(new Run("\nИтоговая статистика:\n")
+                if (!token.IsCancellationRequested)
                 {
-                    FontWeight = FontWeights.Bold
-                });
-                summaryParagraph.Inlines.Add(new Run($"Файлов с совпадениями: {totalFilesWithMatches}\n"));
-                summaryParagraph.Inlines.Add(new Run($"Всего совпадений: {totalMatches}")
-                {
-                    FontWeight = FontWeights.Bold
-                });
-                flowDoc.Blocks.Add(summaryParagraph);
+                    Paragraph summaryParagraph = new Paragraph();
+                    summaryParagraph.Inlines.Add(new Run("\nИтоговая статистика:\n") { FontWeight = FontWeights.Bold });
+                    summaryParagraph.Inlines.Add(new Run($"Файлов с совпадениями: {totalFilesWithMatches}\n"));
+                    summaryParagraph.Inlines.Add(new Run($"Всего совпадений: {totalMatches}") { FontWeight = FontWeights.Bold });
+                    flowDoc.Blocks.Add(summaryParagraph);
 
-                // Выводим результаты в RichTextBox
-                Dispatcher.Invoke(() =>
-                {
-                    LogRichTextBox.Document = flowDoc;
-                    StatusText.Text = $"Поиск завершен. Найдено {totalMatches} совпадений в {totalFilesWithMatches} файлах";
-                    StringCounter_Left.Content = $"Найдено: {totalMatches} ";
-                    StringCounter_Main.Content = $"Файлов: {totalFilesWithMatches}";
-                });
+                    Dispatcher.Invoke(() =>
+                    {
+                        LogRichTextBox.Document = flowDoc;
+                        StatusText.Text = $"Поиск завершен. {totalMatches} совпадений в {totalFilesWithMatches} файлах";
+                        StringCounter_Left.Content = $"Найдено: {totalMatches} ";
+                        StringCounter_Main.Content = $"Файлов: {totalFilesWithMatches}";
+                    });
+                }
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() =>
-                    StatusText.Text = $"Ошибка при поиске во всех файлах: {ex.Message}");
+                Dispatcher.Invoke(() => StatusText.Text = $"Ошибка: {ex.Message}");
             }
             finally
             {
-                // Скрываем индикатор после завершения (успешного или с ошибкой)
                 StatusProgressBar.Visibility = Visibility.Collapsed;
                 StatusProgressBar.IsIndeterminate = false;
+                CancelSearchButton.Visibility = Visibility.Collapsed;
             }
+        }
+
+        private void CancelSearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            _searchCancellationTokenSource?.Cancel();
+            StatusText.Text = "Отмена поиска...";
         }
 
         private void Unical_CheckBox_Checked(object sender, RoutedEventArgs e)

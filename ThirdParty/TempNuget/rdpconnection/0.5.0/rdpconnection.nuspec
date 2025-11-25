@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>RdpConnection</id>
+    <version>0.5.0</version>
+    <title>RdpConnection</title>
+    <authors>Jung Hyun, Nam</authors>
+    <license type="expression">Apache-2.0</license>
+    <licenseUrl>https://licenses.nuget.org/Apache-2.0</licenseUrl>
+    <readme>README.md</readme>
+    <projectUrl>https://github.com/rkttu/rdp-connection</projectUrl>
+    <description>A library that provides RDP file generation and analysis and RDP URL generation capabilities for Remote Desktop Client, Remote Desktop Service, Azure Virtual Desktop, and Microsoft Terminal Service Client.</description>
+    <releaseNotes>https://github.com/rkttu/rdp-connection/releases</releaseNotes>
+    <copyright>(c) 2024 Jung Hyun, Nam, All rights reserved.</copyright>
+    <tags>mstsc rdp uri remote desktop terminal services</tags>
+    <repository type="git" url="https://github.com/rkttu/rdp-connection" commit="4fbe32b83eced66dc7c2b14bd7dcfba8af2b16f5" />
+    <dependencies>
+      <group targetFramework=".NETStandard1.1">
+        <dependency id="NETStandard.Library" version="1.6.1" exclude="Build,Analyzers" />
+        <dependency id="System.ComponentModel.Annotations" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.ComponentModel.Primitives" version="4.3.0" exclude="Build,Analyzers" />
+        <dependency id="System.Runtime.Serialization.Primitives" version="4.3.0" exclude="Build,Analyzers" />
+        <dependency id="System.Text.RegularExpressions" version="4.3.1" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="System.ComponentModel.Annotations" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.ComponentModel.Primitives" version="4.3.0" exclude="Build,Analyzers" />
+        <dependency id="System.Runtime.Serialization.Primitives" version="4.3.0" exclude="Build,Analyzers" />
+        <dependency id="System.Security.Cryptography.ProtectedData" version="4.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Text.RegularExpressions" version="4.3.1" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

@@ -139,22 +139,120 @@ public class LogFileService
             _mainWindow.StatusProgressBar.IsIndeterminate = true; // Бесконечная анимация
             _mainWindow.StatusText.Text = "Чтение файла...";
 
+            var result = new StringBuilder();
+            int lineCount = 0;
+            int matchedLines = 0;
+            const int maxDisplayedLines = 10000;
+            bool limitReached = false;
+
             using (var fileStream = new FileStream(
                 filePath,
                 FileMode.Open,
                 FileAccess.Read,
-                FileShare.ReadWrite))
+                FileShare.ReadWrite,
+                bufferSize: 65536,
+                FileOptions.SequentialScan | FileOptions.Asynchronous))
             using (var streamReader = new StreamReader(fileStream))
             {
-                return await streamReader.ReadToEndAsync();
+                string line;
+                while ((line = await streamReader.ReadLineAsync()) != null)
+                {
+                    lineCount++;
+
+                    // Периодически обновляем статус
+                    if (lineCount % 1000 == 0)
+                    {
+                        _mainWindow.StatusText.Text = $"Обработано строк: {lineCount} | Найдено: {matchedLines}";
+                        await Task.Yield();
+                    }
+
+                    // Проверяем соответствие строки фильтрам
+                    var leftFilters = _getLeftFilters();
+                    var activeFilters = GetActiveFilters(leftFilters);
+                    
+                    if (activeFilters.Count > 0 && activeFilters.All(filter => line.Contains(filter)))
+                    {
+                        matchedLines++;
+
+                        // Добавляем строку в RichTextBox только если не превышен лимит
+                        if (matchedLines <= maxDisplayedLines)
+                        {
+                            _logRichTextBox.Dispatcher.Invoke(() =>
+                            {
+                                var paragraph = new Paragraph();
+                                paragraph.Inlines.Add(new Run(line + "\n"));
+                                _logRichTextBox.Document.Blocks.Clear();
+                                _logRichTextBox.Document.Blocks.Add(paragraph);
+                            });
+                        }
+                        else if (!limitReached)
+                        {
+                            limitReached = true;
+                            // Добавляем сообщение о превышении лимита
+                            _logRichTextBox.Dispatcher.Invoke(() =>
+                            {
+                                var paragraph = new Paragraph();
+                                paragraph.Inlines.Add(new Run(
+                                    $"\n\n--- ПРЕДУПРЕЖДЕНИЕ ---\n" +
+                                    $"Отображено только первые {maxDisplayedLines} строк из {matchedLines} найденных.\n" +
+                                    $"Файл слишком большой. Используйте более конкретные фильтры для уточнения результатов.\n" +
+                                    $"------------------------\n\n"));
+                                _logRichTextBox.Document.Blocks.Clear();
+                                _logRichTextBox.Document.Blocks.Add(paragraph);
+                            });
+                        }
+                    }
+                }
             }
+
+            // Показываем финальное уведомление если превышен лимит
+            if (limitReached)
+            {
+                _logRichTextBox.Dispatcher.Invoke(() =>
+                {
+                    var paragraph = new Paragraph();
+                    paragraph.Inlines.Add(new Run(
+                        $"\n--- ОБРАБОТКА ЗАВЕРШЕНА ---\n" +
+                        $"Всего обработано строк: {lineCount:N0}\n" +
+                        $"Найдено соответствий: {matchedLines:N0}\n" +
+                        $"Отображено: {maxDisplayedLines:N0} строк\n" +
+                        $"Используйте более точные фильтры для уменьшения результатов.\n" +
+                        $"-----------------------------\n"));
+                    _logRichTextBox.Document.Blocks.Clear();
+                    _logRichTextBox.Document.Blocks.Add(paragraph);
+                });
+
+                // Показываем MessageBox с предупреждением
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(
+                        $"Файл содержит слишком много соответствий!\n\n" +
+                        $"Всего найдено: {matchedLines:N0} строк\n" +
+                        $"Отображено: {maxDisplayedLines:N0} строк\n\n" +
+                        $"Рекомендации:\n" +
+                        $"• Используйте более конкретные фильтры\n" +
+                        $"• Добавьте дополнительные условия поиска\n" +
+                        $"• Уточните временной диапазон\n" +
+                        $"• Используйте комбинацию фильтров",
+                        "Большой объем данных",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                });
+            }
+
+            _mainWindow.StringCounter_Main.Content = matchedLines.ToString();
+            _mainWindow.StatusText.Text = $"Готово. Обработано строк: {lineCount:N0} | Найдено: {matchedLines:N0}";
+            return result.ToString();
+        }
+        catch (Exception ex)
+        {
+            _mainWindow.StatusText.Text = $"Ошибка: {ex.Message}";
+            throw;
         }
         finally
         {
-            // Скрываем индикатор после завершения (успешного или с ошибкой)
             _mainWindow.StatusProgressBar.Visibility = Visibility.Collapsed;
             _mainWindow.StatusProgressBar.IsIndeterminate = false;
-            _mainWindow.StatusText.Text = "Готово";
         }
     }
 
@@ -297,35 +395,132 @@ public class LogFileService
 
     private async Task<string> ReadSshFile(string filePath)
     {
-        return await Task.Run(() =>
+        try
         {
-            try
+            // Показываем индикатор загрузки
+            _mainWindow.StatusProgressBar.Visibility = Visibility.Visible;
+            _mainWindow.StatusProgressBar.IsIndeterminate = true; // Бесконечная анимация
+            _mainWindow.StatusText.Text = "Чтение файла через SSH...";
+
+            var result = new StringBuilder();
+            int lineCount = 0;
+            int matchedLines = 0;
+            const int maxDisplayedLines = 10000;
+            bool limitReached = false;
+
+            // Создаем новую команду для каждого запроса
+            var command = _mainWindow._sshClient.CreateCommand($"cat '{filePath}'");
+            command.CommandTimeout = TimeSpan.FromSeconds(30);
+
+            Console.WriteLine($"Executing SSH command: {command.CommandText}");
+            var resultText = command.Execute();
+            Console.WriteLine($"Command executed, exit status: {command.ExitStatus}");
+
+            if (command.ExitStatus != 0)
             {
-                // Создаем новую команду для каждого запроса
-                var command = _mainWindow._sshClient.CreateCommand($"cat '{filePath}'");
-                command.CommandTimeout = TimeSpan.FromSeconds(30);
+                throw new Exception($"SSH command failed (code {command.ExitStatus}): {command.Error}");
+            }
 
-                Console.WriteLine($"Executing SSH command: {command.CommandText}");
-                var result = command.Execute();
-                Console.WriteLine($"Command executed, exit status: {command.ExitStatus}");
+            // Обрабатываем результат построчно
+            var lines = resultText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
+            {
+                lineCount++;
 
-                if (command.ExitStatus != 0)
+                // Периодически обновляем статус
+                if (lineCount % 1000 == 0)
                 {
-                    throw new Exception($"SSH command failed (code {command.ExitStatus}): {command.Error}");
+                    _mainWindow.StatusText.Text = $"Обработано строк: {lineCount} | Найдено: {matchedLines}";
+                    await Task.Yield();
                 }
 
-                return result;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"SSH command error: {ex}");
-                _statusText.Dispatcher.Invoke(() =>
+                // Проверяем соответствие строки фильтрам
+                var leftFilters = _getLeftFilters();
+                var activeFilters = GetActiveFilters(leftFilters);
+                
+                if (activeFilters.Count > 0 && activeFilters.All(filter => line.Contains(filter)))
                 {
-                    _statusText.Text = $"SSH Error: {ex.Message}";
-                });
-                throw;
+                    matchedLines++;
+
+                    // Добавляем строку в RichTextBox только если не превышен лимит
+                    if (matchedLines <= maxDisplayedLines)
+                    {
+                        _logRichTextBox.Dispatcher.Invoke(() =>
+                        {
+                            var paragraph = new Paragraph();
+                            paragraph.Inlines.Add(new Run(line + "\n"));
+                            _logRichTextBox.Document.Blocks.Clear();
+                            _logRichTextBox.Document.Blocks.Add(paragraph);
+                        });
+                    }
+                    else if (!limitReached)
+                    {
+                        limitReached = true;
+                        // Добавляем сообщение о превышении лимита
+                        _logRichTextBox.Dispatcher.Invoke(() =>
+                        {
+                            var paragraph = new Paragraph();
+                            paragraph.Inlines.Add(new Run(
+                                $"\n\n--- ПРЕДУПРЕЖДЕНИЕ ---\n" +
+                                $"Отображено только первые {maxDisplayedLines} строк из {matchedLines} найденных.\n" +
+                                $"Файл слишком большой. Используйте более конкретные фильтры для уточнения результатов.\n" +
+                                $"------------------------\n\n"));
+                            _logRichTextBox.Document.Blocks.Clear();
+                            _logRichTextBox.Document.Blocks.Add(paragraph);
+                        });
+                    }
+                }
             }
-        });
+
+            // Показываем финальное уведомление если превышен лимит
+            if (limitReached)
+            {
+                _logRichTextBox.Dispatcher.Invoke(() =>
+                {
+                    var paragraph = new Paragraph();
+                    paragraph.Inlines.Add(new Run(
+                        $"\n--- ОБРАБОТКА ЗАВЕРШЕНА ---\n" +
+                        $"Всего обработано строк: {lineCount:N0}\n" +
+                        $"Найдено соответствий: {matchedLines:N0}\n" +
+                        $"Отображено: {maxDisplayedLines:N0} строк\n" +
+                        $"Используйте более точные фильтры для уменьшения результатов.\n" +
+                        $"-----------------------------\n"));
+                    _logRichTextBox.Document.Blocks.Clear();
+                    _logRichTextBox.Document.Blocks.Add(paragraph);
+                });
+
+                // Показываем MessageBox с предупреждением
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(
+                        $"Файл содержит слишком много соответствий!\n\n" +
+                        $"Всего найдено: {matchedLines:N0} строк\n" +
+                        $"Отображено: {maxDisplayedLines:N0} строк\n\n" +
+                        $"Рекомендации:\n" +
+                        $"• Используйте более конкретные фильтры\n" +
+                        $"• Добавьте дополнительные условия поиска\n" +
+                        $"• Уточните временной диапазон\n" +
+                        $"• Используйте комбинацию фильтров",
+                        "Большой объем данных",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                });
+            }
+
+            _mainWindow.StringCounter_Main.Content = matchedLines.ToString();
+            _mainWindow.StatusText.Text = $"Готово. Обработано строк: {lineCount:N0} | Найдено: {matchedLines:N0}";
+            return result.ToString();
+        }
+        catch (Exception ex)
+        {
+            _mainWindow.StatusText.Text = $"Ошибка: {ex.Message}";
+            throw;
+        }
+        finally
+        {
+            _mainWindow.StatusProgressBar.Visibility = Visibility.Collapsed;
+            _mainWindow.StatusProgressBar.IsIndeterminate = false;
+        }
     }
 
     private void ClearAndApplyFilters(string content)

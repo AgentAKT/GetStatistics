@@ -16,7 +16,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
     </Window.Resources>
-    
+
 
 
     <DockPanel Background="{StaticResource LightBackground}">
@@ -77,7 +77,7 @@
                         </Grid.ColumnDefinitions>
                         <Button x:Name="OpenFolder" Grid.Column="0" Content="📁" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}" Margin="4,4,4,4"/>
                         <Button x:Name="OpenFolderCK11" Grid.Column="1" Content="CK-11" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}" Margin="4,4,4,4"/>
-                        <Button x:Name="SSHConnectionButton" Grid.Column="2" Content="SSH"  Click="OpenSSHConnectionWindow_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}" Height="26" Margin="4,0,4,0" VerticalAlignment="Center"/>
+                        <Button x:Name="SSHConnectionButton" Grid.Column="2" Content="SSH"  Click="OpenSSHConnectionWindow_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}" Height="26" Margin="4,0,4,4" VerticalAlignment="Bottom"/>
                         <Button x:Name="SharedFoldersConnectionButton" Grid.Column="3" Content="SF"  Click="OpenSharedFoldersWindow_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}" Height="26" Margin="4,0,4,0" VerticalAlignment="Center" Grid.ColumnSpan="2"/>
                     </Grid>
 
@@ -610,12 +610,20 @@
                 <StatusBarItem>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <ProgressBar x:Name="StatusProgressBar" 
-                            Width="100" 
-                            Height="16" 
-                            IsIndeterminate="False" 
-                            Visibility="Collapsed"
-                            Margin="5,0"/>
-                        <TextBlock x:Name="StatusText" Text="Готово" Style="{StaticResource ModernTextBlock}" Foreground="White"/>
+                Width="100" 
+                Height="16" 
+                IsIndeterminate="True" 
+                Visibility="Collapsed"
+                Margin="5,0"/>
+                        <TextBlock x:Name="StatusText" Text="Готово" Style="{StaticResource ModernTextBlock}" Foreground="White" Margin="5,0"/>
+                        <Button x:Name="CancelSearchButton"
+                Content="Отменить"
+                Visibility="Collapsed"
+                Click="CancelSearchButton_Click"
+                Style="{StaticResource ModernButton}"
+                Padding="4,1"
+                FontSize="11"
+                Margin="5,0"/>
                     </StackPanel>
                 </StatusBarItem>
             </StatusBar>

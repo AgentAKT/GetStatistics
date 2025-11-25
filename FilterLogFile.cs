@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Linq;
 using System.Collections;
-using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
+//using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
 using static GetStatistics.MainWindow;
 using System.Windows.Data;
 using System.Diagnostics;
@@ -45,8 +45,22 @@ public class FilterLogFile
         if (string.IsNullOrEmpty(_logContent))
             return;
 
-        var filteredContent = FilterContent(filters, isLeftFilter);
-        UpdateRichTextBox(filteredContent, filters, isLeftFilter);
+        // Обрабатываем построчно
+        var lines = _logContent.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        var filteredLines = new List<string>();
+        _counter = 0;
+
+        foreach (var line in lines)
+        {
+            if (MatchFilters(line, filters))
+            {
+                filteredLines.Add(line);
+                _counter++;
+            }
+        }
+
+        // Обновляем RichTextBox с отфильтрованными строками
+        UpdateRichTextBox(string.Join("\n", filteredLines), filters, isLeftFilter);
         AddToResultsDataGrid(filters, _counter, _counter);
     }
 

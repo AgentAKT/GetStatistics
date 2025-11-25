@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Renci.SshNet.Async</id>
+    <version>1.4.0</version>
+    <authors>Ioannis G.</authors>
+    <owners>Ioannis G.</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://github.com/JohnTheGr8/Renci.SshNet.Async/blob/master/License</licenseUrl>
+    <projectUrl>https://github.com/JohnTheGr8/Renci.SshNet.Async</projectUrl>
+    <description>Extends Renci.SshNet to implement the task-based async pattern</description>
+    <copyright>Copyright 2017</copyright>
+    <tags>SSHNET async sftp TAP</tags>
+    <repository url="https://github.com/JohnTheGr8/Renci.SshNet.Async" />
+    <dependencies>
+      <group targetFramework=".NETFramework4.0">
+        <dependency id="SSH.NET" version="2016.1.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard1.3">
+        <dependency id="NETStandard.Library" version="1.6.1" exclude="Build,Analyzers" />
+        <dependency id="SSH.NET" version="2016.1.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="UAP10.0">
+        <dependency id="Microsoft.NETCore.UniversalWindowsPlatform" version="5.2.6" exclude="Build,Analyzers" />
+        <dependency id="SSH.NET" version="2016.1.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>
