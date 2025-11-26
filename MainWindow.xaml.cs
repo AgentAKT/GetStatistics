@@ -72,8 +72,9 @@ namespace GetStatistics
         private CancellationTokenSource _searchCancellationTokenSource;
         private ServerConfig _lastSshConfig;
         private bool _isCurrentFileSshMode;
-        private bool _isSshMode = false; 
-
+        private bool _isSshMode = false;
+        private CancellationTokenSource _tailCancellationTokenSource;
+        private bool _isTailRunning = false;
         private void AddString1Left(object parameter)
         {
             if (parameter is string newItem)
@@ -239,8 +240,19 @@ namespace GetStatistics
 
         private async void LogList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!(LogList.SelectedItem is string selectedFileName)) return;
-            //AddLogResultInDataGrid($"Файл: {selectedFileName}");
+            // Остановить режим реального времени, если он активен
+            if (_isTailRunning)
+            {
+                _tailCancellationTokenSource?.Cancel();
+                _isTailRunning = false;
+                // Обновите текст кнопки, если она есть в UI
+                var tailButton = FindName("StartStopTailButton") as Button;
+                tailButton?.Dispatcher.Invoke(() => tailButton.Content = "Читать в реальном времени");
+                StatusText.Text = "Режим реального времени остановлен при смене файла.";
+            }
+
+            if (!(LogList.SelectedItem is string selectedFileName))
+                return;
 
             try
             {
@@ -1084,6 +1096,117 @@ namespace GetStatistics
             });
         }
 
+        private async void StartStopTailButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isTailRunning)
+            {
+                // Остановить
+                _tailCancellationTokenSource?.Cancel();
+                _isTailRunning = false;
+                ((Button)sender).Content = "Читать в реальном времени";
+                StatusText.Text = "Реальное время остановлено";
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_currentLogFilePath))
+            {
+                MessageBox.Show("Сначала выберите файл.");
+                return;
+            }
+
+            if (!_isSshMode)
+            {
+                MessageBox.Show("Режим реального времени доступен только для SSH.");
+                return;
+            }
+
+            // Запустить
+            _isTailRunning = true;
+            _tailCancellationTokenSource = new CancellationTokenSource();
+            ((Button)sender).Content = "Остановить";
+            StatusText.Text = "Запуск tail -f...";
+
+            // Запускаем в фоне
+            _ = Task.Run(() => TailLogFileSsh(_currentLogFilePath, _tailCancellationTokenSource.Token));
+        }
+
+        private async Task TailLogFileSsh(string remoteFilePath, CancellationToken cancellationToken)
+        {
+            SshCommand command = null;
+            Dispatcher.Invoke(() => LogRichTextBox.Document.Blocks.Clear());
+            try
+            {
+                if (_sshClient == null || !_sshClient.IsConnected)
+                {
+                    await Dispatcher.Invoke(async () => await ReconnectSshAsync());
+                }
+
+                // Экранируем путь (обернуть в одинарные кавычки, экранировать внутренние)
+                string safePath = remoteFilePath.Replace("'", "'\"'\"'");
+                string tailCmd = $"tail -f '{safePath}'";
+
+                command = _sshClient.CreateCommand(tailCmd);
+
+                // Запускаем асинхронно
+                IAsyncResult asyncResult = command.BeginExecute();
+
+                // Используем OutputStream для чтения
+                using (var reader = new StreamReader(command.OutputStream, Encoding.UTF8))
+                {
+                    while (!cancellationToken.IsCancellationRequested && !asyncResult.IsCompleted)
+                    {
+                        string line = await reader.ReadLineAsync();
+                        if (line != null)
+                        {
+                            await Dispatcher.InvokeAsync(() =>
+                            {
+                                // Ограничение количества строк (чтобы не убить UI)
+                                if (LogRichTextBox.Document.Blocks.Count > 5000)
+                                {
+                                    LogRichTextBox.Document.Blocks.Remove(LogRichTextBox.Document.Blocks.FirstBlock);
+                                }
+
+                                var paragraph = new Paragraph(new Run(line));
+                                LogRichTextBox.Document.Blocks.Add(paragraph);
+                                LogRichTextBox.ScrollToEnd();
+                            }, System.Windows.Threading.DispatcherPriority.Background);
+                        }
+                        else
+                        {
+                            await Task.Delay(50, cancellationToken);
+                        }
+                    }
+                }
+
+                // Явно завершаем команду
+                command.EndExecute(asyncResult);
+                Dispatcher.Invoke(() => LogRichTextBox.Document.Blocks.Clear());
+            }
+            catch (OperationCanceledException)
+            {
+                // Ожидаемое завершение
+            }
+            catch (Exception ex)
+            {
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    MessageBox.Show($"Ошибка в режиме реального времени: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    StatusText.Text = $"Ошибка tail: {ex.Message}";
+                });
+            }
+            finally
+            {
+                command?.Dispose();
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    _isTailRunning = false;
+                    var btn = FindName("StartStopTailButton") as Button;
+                    btn?.Dispatcher.Invoke(() => btn.Content = "Читать в реальном времени");
+                });
+            }
+        }
+
         private async Task<string> ReadLogFileContentAsync(bool isSshMode)
         {
             if (string.IsNullOrEmpty(_currentLogFilePath))
@@ -1139,6 +1262,38 @@ namespace GetStatistics
             {
                 _isReadingLogs = false;
             }
+        }
+
+        private void ScrollToBottomButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Прокручиваем RichTextBox в самый низ
+            LogRichTextBox.ScrollToEnd();
+        }
+
+        private void ScrollToTopButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Прокручиваем RichTextBox в самый низ
+            LogRichTextBox.ScrollToHome();
+        }
+
+        private void ShowResultsPanel(bool isVisible)
+        {
+            if (isVisible)
+            {
+                ResultsPanel.Visibility = Visibility.Visible;
+                ResultsColumn.Width = new GridLength(350);
+                ResultsColumn.MinWidth = 350;
+            }
+            else
+            {
+                ResultsPanel.Visibility = Visibility.Collapsed;
+                ResultsColumn.Width = new GridLength(0);
+                ResultsColumn.MinWidth = 0;
+            }
+
+            // Принудительно обновить layout (на случай, если Grid "завис")
+            MainContentGrid.InvalidateMeasure();
+            MainContentGrid.UpdateLayout();
         }
 
         // Очистить левые фильтры
@@ -1695,6 +1850,7 @@ namespace GetStatistics
             LeftBorder.BorderThickness = new Thickness(2);
             RightBorder.Background = Brushes.LightBlue;
             RightBorder.BorderThickness = new Thickness(2);
+            ShowResultsPanel(true);
             //CalculatorTab.IsSelected = true;
             //AddLogResultInDataGrid(_currentLogFilePath);
         }
@@ -1705,6 +1861,7 @@ namespace GetStatistics
             LeftBorder.BorderThickness = new Thickness(1);
             RightBorder.Background = Brushes.White;
             RightBorder.BorderThickness = new Thickness(1);
+            ShowResultsPanel(false);
             //ResultsTab.IsSelected = true;
         }
 

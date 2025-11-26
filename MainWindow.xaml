@@ -31,24 +31,24 @@
             <MenuItem Header="_Блокнот" Click="MenuItem_OpenNotepad_Click_1"/>
         </Menu>
 
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" MinWidth="250"/>
-                <!-- Левая панель -->
-                <ColumnDefinition Width="5"/>
-                <!-- Разделитель 1 -->
-                <ColumnDefinition Width="*" MinWidth="300"/>
-                <!-- Центральная область -->
-                <ColumnDefinition Width="5"/>
-                <!-- Разделитель 2 -->
-                <ColumnDefinition Width="*" MinWidth="300"/>
-                <!-- Правая область -->
-                <ColumnDefinition Width="5"/>
-                <!-- Разделитель 3 -->
-                <ColumnDefinition Width="*" MinWidth="350"/>
-                <!-- Results panel -->
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
+            <Grid x:Name="MainContentGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" MinWidth="250"/>
+                    <!-- 0 -->
+                    <ColumnDefinition Width="5"/>
+                    <!-- 1 -->
+                    <ColumnDefinition Width="*" MinWidth="300"/>
+                    <!-- 2 -->
+                    <ColumnDefinition Width="5"/>
+                    <!-- 3 -->
+                    <ColumnDefinition Width="*" MinWidth="300"/>
+                    <!-- 4 -->
+                    <ColumnDefinition Width="5"/>
+                    <!-- 5 -->
+                    <ColumnDefinition x:Name="ResultsColumn" Width="0" MinWidth="0"/>
+                    <!-- 6 -->
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -423,26 +423,68 @@
 
             <!-- Main Log Display -->
             <Border Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Style="{StaticResource SectionBorder}" Margin="0,4,0,0">
-                <RichTextBox x:Name="LogRichTextBox" Style="{StaticResource ModernRichTextBox}" 
-                            IsDocumentEnabled="True" 
-                            TextChanged="LogRichTextBox_TextChanged" 
-                            MouseMove="LogRichTextBox_MouseMove"
-                            MouseDoubleClick="LogRichTextBox_PreviewMouseDoubleClick">
-                    <RichTextBox.Resources>
-                        <Style TargetType="Paragraph">
-                            <Setter Property="Margin" Value="0,2,0,2"/>
-                        </Style>
-                    </RichTextBox.Resources>
-                    <FlowDocument>
-                        <Paragraph>
-                            <Run Text="Готов к работе!"/>
-                        </Paragraph>
-                    </FlowDocument>
-                </RichTextBox>
-            </Border>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <RichTextBox x:Name="LogRichTextBox" Grid.Row="0" Style="{StaticResource ModernRichTextBox}" 
+                     IsDocumentEnabled="True" 
+                     TextChanged="LogRichTextBox_TextChanged" 
+                     MouseMove="LogRichTextBox_MouseMove"
+                     MouseDoubleClick="LogRichTextBox_PreviewMouseDoubleClick">
+                        <RichTextBox.Resources>
+                            <Style TargetType="Paragraph">
+                                <Setter Property="Margin" Value="0,2,0,2"/>
+                            </Style>
+                        </RichTextBox.Resources>
+                        <FlowDocument>
+                            <Paragraph>
+                                <Run Text="Готов к работе!"/>
+                            </Paragraph>
+                        </FlowDocument>
+                    </RichTextBox>
 
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="StartStopTailButton" Content="Читать в реальном времени" Click="StartStopTailButton_Click" 
+                            Grid.Row="2" 
+                            Grid.Column="0" 
+                            Width="200" 
+                            HorizontalAlignment="Right" 
+                            Margin="5"  
+                            ToolTip="Прокрутить текст в самый низ" 
+                            Style="{StaticResource ModernButton}" />
+                        <Button x:Name="ScrollToTopButton" 
+                        Grid.Row="2" 
+                        Grid.Column="1"
+                        Content="⬆️ Вверх" 
+                        Width="80" 
+                        HorizontalAlignment="Right" 
+                        Margin="5" 
+                        Click="ScrollToTopButton_Click" 
+                        ToolTip="Прокрутить текст в самый верх" 
+                        Style="{StaticResource ModernButton}"/>     
+
+                    <Button x:Name="ScrollToBottomButton" 
+                        Grid.Row="1" 
+                        Grid.Column="2"
+                        Content="⬇️ Вниз" 
+                        Width="80" 
+                        HorizontalAlignment="Right" 
+                        Margin="5" 
+                        Click="ScrollToBottomButton_Click" 
+                        ToolTip="Прокрутить текст в самый низ" 
+                        Style="{StaticResource ModernButton}"/>
+                    </Grid>
+                </Grid>
+            </Border>
             <!-- Results Panel -->
-            <Border Grid.Row="0" Grid.Column="6" Grid.RowSpan="3" Style="{StaticResource SectionBorder}" >
+            <Border x:Name="ResultsPanel" Grid.Row="0" Grid.Column="6" Grid.RowSpan="3" Style="{StaticResource SectionBorder}" Visibility="Collapsed">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
