@@ -29,7 +29,7 @@
     <DockPanel>
         <!-- Кнопки управления внизу окна -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
-            <Button x:Name="btnAddNew" Content="Новое подключение" Click="AddNew_Click" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
+            <Button x:Name="btnAddNew" Content="Новое подключение" Click="AddNew_Click" Margin="5"  Style="{StaticResource ModernButton}"/>
             <Button x:Name="btnConnect" Content="Подключиться" Width="100" Margin="5" Click="Connect_Click" Style="{StaticResource ModernButton}"/>
             <Button x:Name="btnDuplicate" Content="Дублировать" Width="100" Margin="5" Click="Duplicate_Click" Style="{StaticResource ModernButton}" IsEnabled="False"/>
             <Button x:Name="btnSave" Content="Сохранить" Width="80" Margin="5" Click="Save_Click" Style="{StaticResource ModernButton}"/>

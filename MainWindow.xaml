@@ -75,7 +75,7 @@
                             <ColumnDefinition Width="11*"/>
                             <ColumnDefinition Width="42*"/>
                         </Grid.ColumnDefinitions>
-                        <Button x:Name="OpenFolder" Grid.Column="0" Content="📁" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}" Margin="4,4,4,4"/>
+                        <Button x:Name="OpenFolder" Grid.Column="0" Content="📁" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}" Margin="4,4,4,0" Height="26" VerticalAlignment="Top"/>
                         <Button x:Name="OpenFolderCK11" Grid.Column="1" Content="CK-11" Click="OpenFolder_Click" ToolTip="Открыть папку" Style="{StaticResource ModernButton}" Margin="4,4,4,4"/>
                         <Button x:Name="SSHConnectionButton" Grid.Column="2" Content="SSH"  Click="OpenSSHConnectionWindow_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}" Height="26" Margin="4,0,4,4" VerticalAlignment="Bottom"/>
                         <Button x:Name="SharedFoldersConnectionButton" Grid.Column="3" Content="SF"  Click="OpenSharedFoldersWindow_Click" ToolTip="Быстрое подключение по SSH" Style="{StaticResource ModernButton}" Height="26" Margin="4,0,4,0" VerticalAlignment="Center" Grid.ColumnSpan="2"/>
@@ -158,7 +158,7 @@
                         <Grid>
                             <TextBox x:Name="StringComboBox_One_Left" 
      Text="{Binding ConfigSearch.String1LeftSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-     Margin="0,0,30,0" 
+     Margin="0,0,35,0" 
      Padding="5" 
      FontSize="14"
      VerticalContentAlignment="Center"
@@ -169,7 +169,7 @@
     Height="25"
     HorizontalAlignment="Right"
     VerticalAlignment="Center"
-    Margin="0,0,5,0"
+    Margin="5,0,5,0"
     ToolTip="Добавить в конфиг"
     Command="{Binding AddString1LeftCommand}"
     CommandParameter="{Binding ConfigSearch.String1LeftSearchText}"
@@ -199,7 +199,7 @@
                         <Grid>
                             <TextBox x:Name="StringComboBox_Two_Left" 
      Text="{Binding ConfigSearch.String2LeftSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-     Margin="0,0,30,0" 
+     Margin="0,0,35,0" 
      Padding="5" 
      FontSize="14"
      VerticalContentAlignment="Center"
@@ -210,7 +210,7 @@
     Height="25"
     HorizontalAlignment="Right"
     VerticalAlignment="Center"
-    Margin="0,0,5,0"
+    Margin="100,0,5,0"
     ToolTip="Добавить в конфиг"
     Command="{Binding AddString2LeftCommand}"
     CommandParameter="{Binding ConfigSearch.String2LeftSearchText}"
@@ -318,7 +318,7 @@
                         <Grid>
                             <TextBox x:Name="StringComboBox_One_Right" 
                  Text="{Binding ConfigSearch.String1RightSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="0,0,30,0" 
+                 Margin="0,0,35,0" 
                  Padding="5" 
                  FontSize="14"
                  VerticalContentAlignment="Center"
@@ -359,7 +359,7 @@
                         <Grid>
                             <TextBox x:Name="StringComboBox_Two_Right" 
                  Text="{Binding ConfigSearch.String2RightSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="0,0,30,0" 
+                 Margin="0,0,35,0" 
                  Padding="5" 
                  FontSize="14"
                  VerticalContentAlignment="Center"
@@ -442,7 +442,7 @@
             </Border>
 
             <!-- Results Panel -->
-            <Border Grid.Row="0" Grid.Column="6" Grid.RowSpan="3" Style="{StaticResource SectionBorder}">
+            <Border Grid.Row="0" Grid.Column="6" Grid.RowSpan="3" Style="{StaticResource SectionBorder}" >
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -450,7 +450,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TabControl Grid.Row="0" Grid.RowSpan="2">
+                    <!--<TabControl Grid.Row="0" Grid.RowSpan="2">
                         <TabItem x:Name="ResultsTab" Header="Результаты">
                             <DataGrid x:Name="ResultsDataGrid" 
                   Style="{StaticResource ModernDataGrid}" 
@@ -495,9 +495,9 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                        </TabItem>
+                        </TabItem>-->
 
-                        <TabItem x:Name="CalculatorTab" Header="Калькулятор">
+                        <!--<TabItem x:Name="CalculatorTab" Header="Калькулятор">-->
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -581,8 +581,8 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </Grid>
-                        </TabItem>
-                    </TabControl>
+                        <!--</TabItem>
+                    </TabControl>-->
 
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,5">
                         <Button Content="⎘ Копировать всё" 
@@ -592,7 +592,7 @@
                     Padding="8,2"
                     FontSize="12"
                     Width="120"
-                    Margin="0,0,5,0"
+                    Margin="5"
                     Style="{StaticResource ModernButton}"/>
 
                         <Button Content="Очистить" 
@@ -601,6 +601,7 @@
                     Padding="8,2"
                     FontSize="12"
                     Width="80"
+                                Margin="5"
                     Style="{StaticResource ModernButton}"/>
                     </StackPanel>
                 </Grid>

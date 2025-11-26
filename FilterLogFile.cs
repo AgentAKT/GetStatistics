@@ -61,7 +61,8 @@ public class FilterLogFile
 
         // Обновляем RichTextBox с отфильтрованными строками
         UpdateRichTextBox(string.Join("\n", filteredLines), filters, isLeftFilter);
-        AddToResultsDataGrid(filters, _counter, _counter);
+        //AddToResultsDataGrid(filters, _counter, _counter);
+        _mainWindow.StringCounter_Left.Content = $"Найдено: {_counter} ";
     }
 
     // Для калькулятора — объединяем строки по левым или правым фильтрам
@@ -101,7 +102,7 @@ public class FilterLogFile
         };
 
         UpdateRichTextBoxCalculatorMode(filteredContent, leftFilters, rightFilters);
-        AddToResultsDataGrid(combinedFilterParams, _counter, _counter);
+        //AddToResultsDataGrid(combinedFilterParams, _counter, _counter);
     }
 
     private void UpdateRichTextBoxCalculatorMode(string logContent, FilterParameters leftFilters, FilterParameters rightFilters)
@@ -421,39 +422,39 @@ public class FilterLogFile
         public string Result { get; set; }
     }
 
-    public void AddToResultsDataGrid(FilterParameters filters, int counter, int fullCounter)
-    {
-        if (_mainWindow.ResultsDataGrid == null || !_mainWindow.ResultsDataGrid.CheckAccess())
-            return;
+    //public void AddToResultsDataGrid(FilterParameters filters, int counter, int fullCounter)
+    //{
+    //    if (_mainWindow.ResultsDataGrid == null || !_mainWindow.ResultsDataGrid.CheckAccess())
+    //        return;
 
-        _mainWindow.ResultsDataGrid.Dispatcher.Invoke(() =>
-        {
-            // Создаем строку для DataGrid
-            var newItem = new FilterResultItem
-            {
-                Filters = FormatFilters(filters),
-                Counter = counter,
-                FullCounter = fullCounter
-            };
+    //    _mainWindow.ResultsDataGrid.Dispatcher.Invoke(() =>
+    //    {
+    //        // Создаем строку для DataGrid
+    //        var newItem = new FilterResultItem
+    //        {
+    //            Filters = FormatFilters(filters),
+    //            Counter = counter,
+    //            FullCounter = fullCounter
+    //        };
 
-            // Добавляем новую строку в DataGrid
-            if (_mainWindow.ResultsDataGrid.ItemsSource == null)
-            {
-                _mainWindow.ResultsDataGrid.ItemsSource = new List<FilterResultItem> { newItem };
-            }
-            else if (_mainWindow.ResultsDataGrid.ItemsSource is IList<LogResult> itemsList)
-            {
-                itemsList.Add(new LogResult
-                {
-                    Filters = FormatFilters(filters),
-                    Counter = counter.ToString(),
-                    FullCounter = fullCounter.ToString()
-                });
-                _mainWindow.ResultsDataGrid.Items.Refresh();
-            }
+    //        // Добавляем новую строку в DataGrid
+    //        if (_mainWindow.ResultsDataGrid.ItemsSource == null)
+    //        {
+    //            _mainWindow.ResultsDataGrid.ItemsSource = new List<FilterResultItem> { newItem };
+    //        }
+    //        else if (_mainWindow.ResultsDataGrid.ItemsSource is IList<LogResult> itemsList)
+    //        {
+    //            itemsList.Add(new LogResult
+    //            {
+    //                Filters = FormatFilters(filters),
+    //                Counter = counter.ToString(),
+    //                FullCounter = fullCounter.ToString()
+    //            });
+    //            _mainWindow.ResultsDataGrid.Items.Refresh();
+    //        }
 
-        });
-    }
+    //    });
+    //}
     public void CopySingleCalcRowToClipboard(LogCalcResult item)
     {
         if (item == null)
@@ -546,14 +547,14 @@ public class FilterLogFile
 
     public void CopyResultsToClipboard()
     {
-        if (_mainWindow.ResultsTab.IsSelected)
-        {
-            CopyResultsToClipboard(_mainWindow.ResultsDataGrid);
-        }
-        else if (_mainWindow.CalculatorTab.IsSelected)
-        {
+        //if (_mainWindow.ResultsTab.IsSelected)
+        //{
+        //    CopyResultsToClipboard(_mainWindow.ResultsDataGrid);
+        //}
+        //else if (_mainWindow.CalculatorTab.IsSelected)
+        //{
             CopyCalcResultsToClipboard(_mainWindow.ResultsDataGridCalc);
-        }
+        //}
     }
 
     public void CopyCalcResultsToClipboard(DataGrid dataGrid)
@@ -614,24 +615,24 @@ public class FilterLogFile
 
     public void ClearResultsButton_Click()
     {
-        if (_mainWindow.ResultsTab.IsSelected)
-        {
-            // Очищаем коллекцию, а не присваиваем null
-            if (_mainWindow.ResultsDataGrid.ItemsSource is ObservableCollection<LogResult> logResults)
-            {
-                logResults.Clear();
-            }
-            _mainWindow.ResultsDataGrid.Items.Refresh();
-        }
-        else if (_mainWindow.CalculatorTab.IsSelected)
-        {
+        //if (_mainWindow.ResultsTab.IsSelected)
+        //{
+        //    // Очищаем коллекцию, а не присваиваем null
+        //    if (_mainWindow.ResultsDataGrid.ItemsSource is ObservableCollection<LogResult> logResults)
+        //    {
+        //        logResults.Clear();
+        //    }
+        //    _mainWindow.ResultsDataGrid.Items.Refresh();
+        //}
+        //else if (_mainWindow.CalculatorTab.IsSelected)
+        //{
             // Очищаем коллекцию, а не присваиваем null
             if (_mainWindow.ResultsDataGridCalc.ItemsSource is ObservableCollection<LogCalcResult> calcResults)
             {
                 calcResults.Clear();
             }
             _mainWindow.ResultsDataGridCalc.Items.Refresh();
-        }
+        //}
     }
 
     private string FormatFilters(FilterParameters filters)

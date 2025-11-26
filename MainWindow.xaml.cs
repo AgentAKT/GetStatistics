@@ -120,7 +120,7 @@ namespace GetStatistics
                 StringComboBox_One_Right,
                 StringComboBox_Two_Right);
             LoadConfig();
-            ResultsDataGrid.ItemsSource = LogResults;
+            //ResultsDataGrid.ItemsSource = LogResults;
             ResultsDataGridCalc.ItemsSource = _logCalcResults;
             _networkConnection = new NetworkConnection();
             _filterFiles = new FilterFiles(this);
@@ -240,7 +240,7 @@ namespace GetStatistics
         private async void LogList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!(LogList.SelectedItem is string selectedFileName)) return;
-            AddLogResultInDataGrid($"Файл: {selectedFileName}");
+            //AddLogResultInDataGrid($"Файл: {selectedFileName}");
 
             try
             {
@@ -259,7 +259,7 @@ namespace GetStatistics
                     _currentLogFilePath = Path.Combine(_currentLogFolderPath, selectedFileName);
                 }
 
-                string content = await ReadLogFileContentAsync(_isSshMode); // ← передаём режим!
+                string content = await ReadLogFileContentAsync(_isSshMode); 
                 if (content != null)
                 {
                     LogRichTextBox.Document.Blocks.Clear();
@@ -281,26 +281,26 @@ namespace GetStatistics
 
         public void AddLogResultInDataGrid(string message)
         {
-            if (ResultsTab.IsSelected)
-            {
-                // Проверяем, что ItemsSource установлен правильно
-                if (ResultsDataGrid.ItemsSource == null)
-                {
-                    ResultsDataGrid.ItemsSource = LogResults;
-                }
+            //if (ResultsTab.IsSelected)
+            //{
+            //    // Проверяем, что ItemsSource установлен правильно
+            //    if (ResultsDataGrid.ItemsSource == null)
+            //    {
+            //        ResultsDataGrid.ItemsSource = LogResults;
+            //    }
 
-                LogResults.Add(new LogResult
-                {
-                    Filters = message,
-                    Counter = "/",
-                    FullCounter = "/"
-                });
+            //    LogResults.Add(new LogResult
+            //    {
+            //        Filters = message,
+            //        Counter = "/",
+            //        FullCounter = "/"
+            //    });
 
-                ResultsDataGrid.Items.Refresh();
-                ResultsDataGrid.ScrollIntoView(LogResults.Last());
-            }
-            else if (CalculatorTab.IsSelected)
-            {
+            //    ResultsDataGrid.Items.Refresh();
+            //    ResultsDataGrid.ScrollIntoView(LogResults.Last());
+            //}
+            //else if (CalculatorTab.IsSelected)
+            //{
                 // Проверяем, что ItemsSource установлен правильно
                 if (ResultsDataGridCalc.ItemsSource == null)
                 {
@@ -317,7 +317,7 @@ namespace GetStatistics
                 ResultsDataGridCalc.Items.Refresh();
                 ResultsDataGridCalc.ScrollIntoView(_logCalcResults.Last());
             }
-        }
+        //}
 
         private async Task LoadLocalFile(string filePath)
         {
@@ -651,34 +651,34 @@ namespace GetStatistics
         // Копирование по кнопке
         private void CopyRowButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ResultsTab.IsSelected)
-            {
-                var selectedItem = ResultsDataGrid.SelectedItem as LogResult; // Изменили тип здесь
-                if (selectedItem != null)
-                {
-                    _filterLogFile.CopySingleRowToClipboard(selectedItem);
-                    ShowCopyNotification();
-                }
-            }
-            else if (CalculatorTab.IsSelected)
-            {
+            //if (ResultsTab.IsSelected)
+            //{
+            //    var selectedItem = ResultsDataGrid.SelectedItem as LogResult; // Изменили тип здесь
+            //    if (selectedItem != null)
+            //    {
+            //        _filterLogFile.CopySingleRowToClipboard(selectedItem);
+            //        ShowCopyNotification();
+            //    }
+            //}
+            //else if (CalculatorTab.IsSelected)
+            //{
                 var selectedItem = ResultsDataGridCalc.SelectedItem as LogCalcResult; // Изменили тип здесь
                 if (selectedItem != null)
                 {
                     _filterLogFile.CopySingleCalcRowToClipboard(selectedItem);
                     ShowCopyNotification();
                 }
-            }
+            //}
         }
 
         // Копирование по двойному клику на строку
         private void ResultsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (ResultsDataGrid.SelectedItem is LogResult row)
-            {
-                Clipboard.SetText(row.GetCopyText());
-                ShowCopyNotification();
-            }
+            //if (ResultsDataGrid.SelectedItem is LogResult row)
+            //{
+            //    Clipboard.SetText(row.GetCopyText());
+            //    ShowCopyNotification();
+            //}
         }
 
         // Всплывающее уведомление
@@ -799,7 +799,7 @@ namespace GetStatistics
             {
                 _isSshMode = false;
                 selectedFolder = @"C:\Program Files\Monitel\CK-11\Client\Log";
-                AddLogResultInDataGrid("Клиентские логи CK-11");
+                //AddLogResultInDataGrid("Клиентские логи CK-11");
                 if (!Directory.Exists(selectedFolder))
                 {
                     MessageBox.Show($"Папка не найдена: {selectedFolder}");
@@ -809,7 +809,7 @@ namespace GetStatistics
             else
             {
                 selectedFolder = OpenFolderDialog();
-                AddLogResultInDataGrid(selectedFolder);
+                //AddLogResultInDataGrid(selectedFolder);
                 if (string.IsNullOrEmpty(selectedFolder))
                 {
                     return;
@@ -1067,7 +1067,7 @@ namespace GetStatistics
             throw new Exception($"Не удалось прочитать файл после {maxRetries + 1} попыток.");
         }
 
-        // Метод для чтения локального файла (старая логика)
+        // Метод для чтения локального файла 
         private async Task<string> ReadLocalFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
@@ -1123,7 +1123,6 @@ namespace GetStatistics
             _isReadingLogs = true;
             try
             {
-                // 🔥 Используем тот же режим, что и при выборе файла
                 string content = await ReadLogFileContentAsync(_isSshMode);
                 if (content == null)
                     return;
@@ -1696,8 +1695,8 @@ namespace GetStatistics
             LeftBorder.BorderThickness = new Thickness(2);
             RightBorder.Background = Brushes.LightBlue;
             RightBorder.BorderThickness = new Thickness(2);
-            CalculatorTab.IsSelected = true;
-            AddLogResultInDataGrid(_currentLogFilePath);
+            //CalculatorTab.IsSelected = true;
+            //AddLogResultInDataGrid(_currentLogFilePath);
         }
 
         private void CalculatorMode_CheckBox_Unhecked(object sender, RoutedEventArgs e)
@@ -1706,7 +1705,7 @@ namespace GetStatistics
             LeftBorder.BorderThickness = new Thickness(1);
             RightBorder.Background = Brushes.White;
             RightBorder.BorderThickness = new Thickness(1);
-            ResultsTab.IsSelected = true;
+            //ResultsTab.IsSelected = true;
         }
 
         private void ClearResultsButton_Click(object sender, RoutedEventArgs e)
