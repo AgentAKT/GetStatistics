@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Log Navigator"
         Height="800"
-        Width="1600"
+        Width="1400"
         MinWidth="1100"
         MinHeight="600"
         WindowStartupLocation="CenterScreen"
@@ -584,7 +584,7 @@
                                     </DataGrid.Resources>
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Строка 1" Binding="{Binding LineText1}" 
-                        Width="*" MinWidth="120">
+                        Width="*">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="TextWrapping" Value="Wrap"/>
@@ -594,7 +594,7 @@
                                         </DataGridTextColumn>
 
                                         <DataGridTextColumn Header="Строка 2" Binding="{Binding LineText2}" 
-                        Width="*" MinWidth="120">
+                        Width="*">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="TextWrapping" Value="Wrap"/>
@@ -604,19 +604,19 @@
                                         </DataGridTextColumn>
 
                                         <DataGridTextColumn Header="Результат" Binding="{Binding Result}" 
-                        Width="65" MinWidth="60" MaxWidth="80"/>
+                        Width="65" MinWidth="70" MaxWidth="80"/>
 
-                                        <DataGridTemplateColumn Header="Копировать" 
-                            Width="80" MinWidth="60" MaxWidth="80">
+                                <DataGridTemplateColumn Header="Копировать" 
+                            Width="85">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Button Content="⎘" 
-                        FontFamily="Segoe UI Symbol"
-                        ToolTip="Копировать строку"
-                        Click="CopyRowButton_Click"
-                        Padding="2"
-                        FontSize="12"
-                        Style="{StaticResource ModernButton}"/>
+                                                        FontFamily="Segoe UI Symbol"
+                                                        ToolTip="Копировать строку"
+                                                        Click="CopyRowButton_Click"
+                                                        Padding="2"
+                                                        FontSize="12"
+                                                        Style="{StaticResource ModernButton}"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -632,7 +632,7 @@
                     ToolTip="Копировать всю таблицу"
                     Click="CopyAllTableButton_Click"
                     Padding="8,2"
-                    FontSize="12"
+                    FontSize="10"
                     Width="120"
                     Margin="5"
                     Style="{StaticResource ModernButton}"/>
@@ -641,7 +641,7 @@
                     ToolTip="Очистить результаты"
                     Click="ClearResultsButton_Click"
                     Padding="8,2"
-                    FontSize="12"
+                    FontSize="10"
                     Width="80"
                                 Margin="5"
                     Style="{StaticResource ModernButton}"/>
@@ -665,7 +665,7 @@
                 Click="CancelSearchButton_Click"
                 Style="{StaticResource ModernButton}"
                 Padding="4,1"
-                FontSize="11"
+                FontSize="12"
                 Margin="5,0"/>
                     </StackPanel>
                 </StatusBarItem>
